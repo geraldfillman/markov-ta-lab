@@ -1,0 +1,2 @@
+# This directory holds raw OHLCV CSV files downloaded from yfinance.
+# Files are managed by src/data.py → save_raw().

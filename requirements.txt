@@ -1,0 +1,43 @@
+# Core scientific stack
+numpy
+pandas
+scipy
+scikit-learn
+matplotlib
+plotly
+jupyterlab
+ipykernel
+pytest
+
+# Market data
+yfinance
+
+# Backtesting
+vectorbt
+backtesting
+
+# Technical analysis
+ta
+
+# Hidden Markov Models
+hmmlearn
+
+# Change-point detection
+ruptures
+
+# Volatility modeling (GARCH)
+arch
+
+# Kalman filtering
+pykalman
+filterpy
+
+# Statistics
+statsmodels
+
+# Optional (uncomment when needed)
+# TA-Lib
+# pomegranate
+# pgmpy
+# pyportfolioopt
+# riskfolio-lib
