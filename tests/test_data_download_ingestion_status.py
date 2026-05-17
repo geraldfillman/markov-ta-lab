@@ -135,16 +135,23 @@ def test_data_download_marks_missing_requested_symbol_partial(
             processed_dir=str(processed_dir),
         ),
     )
-    monkeypatch.setattr(
-        module,
-        "download_ohlcv",
-        lambda symbols, start, end: {"SPY": _sample_frame()},
-    )
+    calls: list[tuple[str, ...]] = []
+
+    def download_one_symbol(symbols, start, end):
+        calls.append(tuple(symbols))
+        assert len(symbols) == 1
+        symbol = symbols[0]
+        if symbol == "QQQ":
+            raise RuntimeError("No OHLCV rows returned for QQQ")
+        return {symbol: _sample_frame()}
+
+    monkeypatch.setattr(module, "download_ohlcv", download_one_symbol)
     monkeypatch.setattr(module, "enrich_market_data", lambda frame: frame.assign(state=0))
 
     module.main()
 
     payload = json.loads(status_path.read_text(encoding="utf-8"))
+    assert calls == [("SPY",), ("QQQ",)]
     assert payload["status"] == "partial"
     assert [row["symbol"] for row in payload["symbols"]] == ["SPY", "QQQ"]
     assert payload["symbols"][0]["status"] == "success"
@@ -152,7 +159,7 @@ def test_data_download_marks_missing_requested_symbol_partial(
     assert payload["symbols"][0]["first_date"] == "2024-01-02"
     assert payload["symbols"][1]["status"] == "error"
     assert payload["symbols"][1]["rows"] == 0
-    assert "No data returned for requested symbol QQQ" == payload["symbols"][1]["error"]
+    assert "No OHLCV rows returned for QQQ" == payload["symbols"][1]["error"]
 
 
 def test_data_download_rejects_unsupported_provider_before_download(

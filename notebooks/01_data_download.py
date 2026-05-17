@@ -89,9 +89,31 @@ def _run_status(symbol_statuses: list[IngestionSymbolStatus]) -> str:
 
 
 def _download_data(symbols: list[str], start: str, end: str, provider: str):
-    if provider == "yfinance":
-        return download_ohlcv(symbols, start, end)
-    raise ValueError(f"Unsupported provider: {provider}")
+    if provider != "yfinance":
+        raise ValueError(f"Unsupported provider: {provider}")
+
+    data = {}
+    symbol_statuses: list[IngestionSymbolStatus] = []
+    for symbol in symbols:
+        try:
+            downloaded = download_ohlcv([symbol], start, end)
+        except Exception as error:
+            symbol_statuses.append(
+                IngestionSymbolStatus(symbol=symbol, status="error", rows=0, error=str(error))
+            )
+            continue
+
+        if symbol not in downloaded:
+            symbol_statuses.append(_missing_symbol_status(symbol))
+            continue
+
+        frame = downloaded[symbol]
+        symbol_status = _symbol_status(symbol, frame)
+        symbol_statuses.append(symbol_status)
+        if symbol_status.status == "success":
+            data[symbol] = frame
+
+    return data, symbol_statuses
 
 
 def enrich_market_data(frame):
@@ -129,11 +151,7 @@ def main() -> None:
 
     symbol_statuses: list[IngestionSymbolStatus] = []
     try:
-        data = _download_data(symbols, args.start, args.end, args.provider)
-        symbol_statuses = [
-            _symbol_status(symbol, data[symbol]) if symbol in data else _missing_symbol_status(symbol)
-            for symbol in symbols
-        ]
+        data, symbol_statuses = _download_data(symbols, args.start, args.end, args.provider)
         enriched = {
             symbol: enrich_market_data(frame)
             for symbol, frame in data.items()
