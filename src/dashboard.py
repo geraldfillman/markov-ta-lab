@@ -171,7 +171,7 @@ def _summary(walkforward: pd.DataFrame, baselines: pd.DataFrame, clusters: pd.Da
 
 
 def _render_dashboard_html(data: dict[str, object]) -> str:
-    payload = json.dumps(data, allow_nan=False)
+    payload = _safe_script_json(data)
     generated_note = escape("Data is embedded from reports/tables at generation time.")
     return f"""<!doctype html>
 <html lang="en">
@@ -588,3 +588,13 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
 </body>
 </html>
 """
+
+
+def _safe_script_json(data: dict[str, object]) -> str:
+    """Serialize JSON for embedding in an inline script tag."""
+    return (
+        json.dumps(data, allow_nan=False)
+        .replace("&", "\\u0026")
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+    )

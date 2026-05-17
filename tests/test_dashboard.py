@@ -147,3 +147,42 @@ def test_invalid_ingestion_status_schema_embeds_error_and_still_writes_dashboard
     assert output_path.exists()
     assert payload["ingestionStatus"] is None
     assert "missing field" in payload["ingestionError"]  # type: ignore[operator]
+
+
+def test_embedded_payload_cannot_close_inline_script(tmp_path: Path) -> None:
+    tables_dir = tmp_path / "tables"
+    output_dir = tmp_path / "dashboard"
+    _write_dashboard_inputs(tables_dir)
+    hostile_error = "</script><script>alert('xss')</script>"
+    (tables_dir / "ingestion_status.json").write_text(
+        json.dumps(
+            {
+                "run_id": "run-1",
+                "provider": "yfinance",
+                "start": "2024-01-01",
+                "end": "2024-01-05",
+                "status": "failed",
+                "started_at": "2024-01-05T10:00:00Z",
+                "finished_at": "2024-01-05T10:00:03Z",
+                "symbols": [
+                    {
+                        "symbol": "SPY",
+                        "status": "error",
+                        "rows": 0,
+                        "first_date": None,
+                        "last_date": None,
+                        "total_missing": 0,
+                        "error": hostile_error,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    html = generate_dashboard(tables_dir=tables_dir, output_dir=output_dir).read_text(encoding="utf-8")
+    payload = _embedded_payload(html)
+
+    assert hostile_error not in html
+    assert "\\u003c/script\\u003e" in html
+    assert payload["ingestionStatus"]["symbols"][0]["error"] == hostile_error  # type: ignore[index]
