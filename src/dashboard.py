@@ -9,23 +9,25 @@ from pathlib import Path
 import pandas as pd
 
 from src.config import TABLES_DIR
+from src.ingestion_status import load_ingestion_status
 
 
 def generate_dashboard(
     tables_dir: str | Path = TABLES_DIR,
     output_dir: str | Path = "reports/dashboard",
+    ingestion_status_path: str | Path | None = None,
 ) -> Path:
     """Generate a self-contained HTML dashboard from report CSV tables."""
     tables_path = Path(tables_dir)
     output_path = Path(output_dir) / "index.html"
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    data = _load_dashboard_data(tables_path)
+    data = _load_dashboard_data(tables_path, ingestion_status_path=ingestion_status_path)
     output_path.write_text(_render_dashboard_html(data), encoding="utf-8")
     return output_path
 
 
-def _load_dashboard_data(tables_dir: Path) -> dict[str, object]:
+def _load_dashboard_data(tables_dir: Path, ingestion_status_path: str | Path | None = None) -> dict[str, object]:
     walkforward = _read_csv(tables_dir / "walkforward_backtest_summary.csv")
     baselines = _read_csv(tables_dir / "walkforward_baseline_comparison.csv")
     vol_conditioned = _read_csv(tables_dir / "vol_conditioned_state_expectancy.csv")
@@ -35,6 +37,9 @@ def _load_dashboard_data(tables_dir: Path) -> dict[str, object]:
     sensitivity = _read_optional_csv(tables_dir / "walkforward_sensitivity.csv")
     stability = _read_optional_csv(tables_dir / "sensitivity_stability_summary.csv")
     sharpe_ci = _read_optional_csv(tables_dir / "walkforward_sharpe_ci.csv")
+    ingestion_status, ingestion_error, ingestion_message = _load_ingestion_snapshot(
+        Path(ingestion_status_path) if ingestion_status_path is not None else tables_dir / "ingestion_status.json"
+    )
 
     return {
         "walkforward": _records(walkforward),
@@ -46,6 +51,9 @@ def _load_dashboard_data(tables_dir: Path) -> dict[str, object]:
         "sensitivity": _records(sensitivity),
         "stability": _records(stability),
         "sharpeCi": _records(sharpe_ci),
+        "ingestionStatus": ingestion_status,
+        "ingestionError": ingestion_error,
+        "ingestionMessage": ingestion_message,
         "summary": _summary(walkforward, baselines, clusters),
         "sources": {
             "walkforward": "walkforward_backtest_summary.csv",
@@ -57,6 +65,7 @@ def _load_dashboard_data(tables_dir: Path) -> dict[str, object]:
             "sensitivity": "walkforward_sensitivity.csv",
             "stability": "sensitivity_stability_summary.csv",
             "sharpeCi": "walkforward_sharpe_ci.csv",
+            "ingestionStatus": "ingestion_status.json",
         },
     }
 
@@ -89,6 +98,37 @@ def _latest_cluster_name(tables_dir: Path) -> str:
         reverse=True,
     )
     return candidates[0].name if candidates else "asset_behavior_clusters.csv"
+
+
+def _load_ingestion_snapshot(path: Path) -> tuple[dict[str, object] | None, str | None, str | None]:
+    try:
+        status = load_ingestion_status(path)
+        if status is None:
+            return None, None, "No ingestion status captured yet."
+        _validate_ingestion_status(status)
+        return status, None, None
+    except Exception as exc:
+        return None, f"Could not load ingestion status: {exc}", None
+
+
+def _validate_ingestion_status(status: object) -> None:
+    if not isinstance(status, dict):
+        raise ValueError("expected a JSON object")
+
+    required = ("provider", "start", "end", "status", "started_at", "symbols")
+    missing = [key for key in required if key not in status]
+    if missing:
+        raise ValueError(f"missing field(s): {', '.join(missing)}")
+
+    if not isinstance(status["symbols"], list):
+        raise ValueError("symbols must be a list")
+
+    for index, symbol in enumerate(status["symbols"]):
+        if not isinstance(symbol, dict):
+            raise ValueError(f"symbols[{index}] must be an object")
+        for key in ("symbol", "status"):
+            if key not in symbol:
+                raise ValueError(f"symbols[{index}] missing field: {key}")
 
 
 def _records(frame: pd.DataFrame) -> list[dict[str, object]]:
@@ -239,6 +279,7 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
       <button class="tab" data-panel="baselines">Baselines</button>
       <button class="tab" data-panel="volatility">Volatility EV</button>
       <button class="tab" data-panel="clusters">Clusters</button>
+      <button class="tab" data-panel="ingestion">Ingestion</button>
       <button class="tab" data-panel="research">Research QA</button>
     </nav>
     <section id="performance" class="panel grid two">
@@ -273,6 +314,16 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
       <div class="card">
         <h2>Cluster Feature Table</h2>
         <div class="table-wrap"><table id="cluster-table"></table></div>
+      </div>
+    </section>
+    <section id="ingestion" class="panel grid two" hidden>
+      <div class="card">
+        <h2>Ingestion Status</h2>
+        <div id="ingestion-summary" class="summary-grid"></div>
+      </div>
+      <div class="card">
+        <h2>Symbol Rows</h2>
+        <div class="table-wrap"><table id="ingestion-table"></table></div>
       </div>
     </section>
     <section id="research" class="panel grid two" hidden>
@@ -408,6 +459,46 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
       ], dashboardData.clusters);
     }}
 
+    function renderIngestion() {{
+      const summary = document.getElementById("ingestion-summary");
+      if (dashboardData.ingestionError) {{
+        summary.innerHTML = `<div class="summary-block" style="grid-column:1 / -1;"><h3>Status artifact</h3><p class="note">${{esc(dashboardData.ingestionError)}}</p></div>`;
+        document.getElementById("ingestion-table").innerHTML = "";
+        return;
+      }}
+      if (!dashboardData.ingestionStatus) {{
+        summary.innerHTML = `<div class="summary-block" style="grid-column:1 / -1;"><h3>Status artifact</h3><p class="note">${{esc(dashboardData.ingestionMessage || "No ingestion status captured yet.")}}</p></div>`;
+        document.getElementById("ingestion-table").innerHTML = "";
+        return;
+      }}
+
+      const status = dashboardData.ingestionStatus;
+      summary.innerHTML = [
+        ["Status", status.status ?? "n/a", status.run_id ?? ""],
+        ["Provider", status.provider ?? "n/a", `${{status.start ?? "n/a"}} to ${{status.end ?? "n/a"}}`],
+        ["Started", status.started_at ?? "n/a", `Finished: ${{status.finished_at ?? "n/a"}}`]
+      ].map(([label, value, sub]) => `
+        <div class="summary-block"><h3>${{esc(label)}}</h3><div class="value">${{esc(value)}}</div><p>${{esc(sub)}}</p></div>
+      `).join("");
+
+      const rows = [...(status.symbols || [])].map(row => ({{
+        ...row,
+        missing_count: row.missing_count ?? row.total_missing ?? 0,
+        first_date: row.first_date ?? "n/a",
+        last_date: row.last_date ?? "n/a",
+        error: row.error ?? ""
+      }}));
+      table("ingestion-table", [
+        {{key:"symbol", label:"Symbol"}},
+        {{key:"status", label:"Status"}},
+        {{key:"rows", label:"Rows"}},
+        {{key:"first_date", label:"First Date"}},
+        {{key:"last_date", label:"Last Date"}},
+        {{key:"missing_count", label:"missing_count"}},
+        {{key:"error", label:"Error"}}
+      ], rows);
+    }}
+
     function renderResearchQA() {{
       const pooled = [...dashboardData.clusterPooled]
         .filter(row => row.ev_after_cost_5 != null)
@@ -491,6 +582,7 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
     renderBaselines();
     renderVolatility();
     renderClusters();
+    renderIngestion();
     renderResearchQA();
   </script>
 </body>
