@@ -131,7 +131,7 @@ def main() -> None:
 
         write_status("success", symbol_statuses, finished_at=_now_iso())
     except Exception as error:
-        failed_statuses = symbol_statuses or [
+        failed_statuses = [
             IngestionSymbolStatus(symbol=symbol, status="error", rows=0, error=str(error))
             for symbol in symbols
         ]
