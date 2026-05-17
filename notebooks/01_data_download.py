@@ -5,6 +5,12 @@ Run from the repository root:
     python notebooks/01_data_download.py
 """
 
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
 from src.config import DEFAULT_END, DEFAULT_START, FIRST_EXPERIMENT_SYMBOLS
 from src.data import download_ohlcv, missing_data_report, save_processed, save_raw
 from src.indicators import add_indicators
