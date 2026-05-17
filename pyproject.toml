@@ -78,10 +78,7 @@ exclude = [
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
-# Pin tmp_path to a project-local dir. The default system temp path is locked
-# down on some Windows accounts and triggers PermissionError on every tmp_path
-# fixture. The directory below is gitignored.
-addopts = "-ra -p no:cacheprovider --basetemp=.test_output/pytest-tmp"
+addopts = "-ra -p no:cacheprovider"
 
 [tool.pyrefly]
 search-path = ["."]
