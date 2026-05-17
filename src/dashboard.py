@@ -222,6 +222,7 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
     .chart-bar.neg {{ fill: #c24135; }}
     .chart-label {{ fill: var(--text); font-size: 12px; font-weight: 700; }}
     .chart-value {{ fill: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }}
+    .chart-value-pos, .chart-value-neg {{ dominant-baseline: auto; }}
     .chart-axis-label {{ fill: var(--muted); font-size: 11px; }}
     .chart-empty {{ color: var(--muted); background: #fbfcfd; border: 1px dashed var(--line); border-radius: 8px; padding: 22px; text-align: center; }}
     table {{ width: 100%; border-collapse: collapse; font-size: 13px; }}
@@ -421,8 +422,11 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
       const rowHeight = 34;
       const bottom = 26;
       const barHeight = 16;
-      const plotWidth = width - left - right;
-      const zeroX = left + plotWidth / 2;
+      const valueGutter = 78;
+      const plotLeft = left + valueGutter;
+      const plotRight = width - right - valueGutter;
+      const plotWidth = plotRight - plotLeft;
+      const zeroX = plotLeft + plotWidth / 2;
       const maxAbs = Math.max(...chartRows.map(row => Math.abs(row.chartValue)), 0.000001);
       const height = top + bottom + chartRows.length * rowHeight;
       const titleId = `${{target}}-title`;
@@ -439,27 +443,28 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
         const x = value < 0 ? zeroX - scaled : zeroX;
         const label = row[labelKey] ?? "n/a";
         const formatted = valueFormatter(value);
-        const valueX = value < 0 ? Math.max(left + 8, zeroX - scaled - 7) : Math.min(width - right - 8, zeroX + scaled + 7);
+        const valueX = value < 0 ? plotLeft - 8 : plotRight + 8;
         const valueAnchor = value < 0 ? "end" : "start";
+        const valueTextLength = Math.min(valueGutter - 16, Math.max(36, String(formatted).length * 7));
         return `
           <text class="chart-label" x="${{left - 10}}" y="${{y + 12}}" text-anchor="end"><title>${{esc(label)}}</title>${{esc(truncate(label))}}</text>
           <rect class="chart-bar ${{value < 0 ? "neg" : "pos"}}" x="${{x.toFixed(2)}}" y="${{y}}" width="${{scaled.toFixed(2)}}" height="${{barHeight}}">
             <title>${{esc(label)}}: ${{esc(formatted)}}</title>
           </rect>
-          <text class="chart-value" x="${{valueX.toFixed(2)}}" y="${{y + 12}}" text-anchor="${{valueAnchor}}">${{esc(formatted)}}</text>`;
+          <text class="chart-value chart-value-${{value < 0 ? "neg" : "pos"}}" data-label-side="${{value < 0 ? "left-gutter" : "right-gutter"}}" x="${{valueX.toFixed(2)}}" y="${{y + 12}}" text-anchor="${{valueAnchor}}" textLength="${{valueTextLength.toFixed(2)}}" lengthAdjust="spacingAndGlyphs"><title>${{esc(label)}}: ${{esc(formatted)}}</title>${{esc(formatted)}}</text>`;
       }}).join("");
 
       container.innerHTML = `
         <div class="chart-wrap">
           <svg class="chart-svg" viewBox="0 0 ${{width}} ${{height}}" role="img" aria-labelledby="${{titleId}}">
             <title id="${{titleId}}">${{esc(title)}}</title>
-            <line class="chart-grid" x1="${{left}}" x2="${{width - right}}" y1="${{top - 10}}" y2="${{top - 10}}"></line>
+            <line class="chart-grid" x1="${{plotLeft}}" x2="${{plotRight}}" y1="${{top - 10}}" y2="${{top - 10}}"></line>
             <line class="zero-axis" x1="${{zeroX}}" x2="${{zeroX}}" y1="${{top - 14}}" y2="${{height - bottom}}"></line>
-            <line class="chart-grid" x1="${{left}}" x2="${{width - right}}" y1="${{height - bottom}}" y2="${{height - bottom}}"></line>
+            <line class="chart-grid" x1="${{plotLeft}}" x2="${{plotRight}}" y1="${{height - bottom}}" y2="${{height - bottom}}"></line>
             ${{bars}}
-            <text class="chart-axis-label" x="${{left}}" y="${{axisY}}" text-anchor="start">-${{esc(valueFormatter(maxAbs))}}</text>
+            <text class="chart-axis-label" x="${{plotLeft}}" y="${{axisY}}" text-anchor="start">-${{esc(valueFormatter(maxAbs))}}</text>
             <text class="chart-axis-label" x="${{zeroX}}" y="${{axisY}}" text-anchor="middle">0</text>
-            <text class="chart-axis-label" x="${{width - right}}" y="${{axisY}}" text-anchor="end">${{esc(valueFormatter(maxAbs))}}</text>
+            <text class="chart-axis-label" x="${{plotRight}}" y="${{axisY}}" text-anchor="end">${{esc(valueFormatter(maxAbs))}}</text>
           </svg>
         </div>`;
     }}

@@ -204,3 +204,33 @@ def test_dashboard_uses_accessible_svg_charts_with_zero_axis_and_empty_state(tmp
     assert "No chart rows available." in html
     assert "performance-bars" in html
     assert "vol-bars" in html
+
+
+def test_svg_chart_reserves_value_label_gutters_for_full_scale_bars(tmp_path: Path) -> None:
+    tables_dir = tmp_path / "tables"
+    output_dir = tmp_path / "dashboard"
+    _write_dashboard_inputs(tables_dir)
+    (tables_dir / "walkforward_backtest_summary.csv").write_text(
+        "\n".join(
+            [
+                "symbol,total_return,sharpe,max_drawdown,win_rate,exposure_time,trade_count",
+                "MAXPOS_LONG_LABEL,12.345,1.2,-0.05,0.55,0.40,8",
+                "MAXNEG_LONG_LABEL,-12.345,-1.2,-0.50,0.45,0.35,9",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    html = generate_dashboard(tables_dir=tables_dir, output_dir=output_dir).read_text(encoding="utf-8")
+    payload = _embedded_payload(html)
+
+    assert "const valueGutter = 78;" in html
+    assert "const plotLeft = left + valueGutter;" in html
+    assert "const plotRight = width - right - valueGutter;" in html
+    assert 'class="chart-value chart-value-${value < 0 ? "neg" : "pos"}"' in html
+    assert 'data-label-side="${value < 0 ? "left-gutter" : "right-gutter"}"' in html
+    assert "const valueX = value < 0 ? plotLeft - 8 : plotRight + 8;" in html
+    assert 'text-anchor="${valueAnchor}"' in html
+    assert 'lengthAdjust="spacingAndGlyphs"' in html
+    assert [row["total_return"] for row in payload["walkforward"]] == [12.345, -12.345]  # type: ignore[index]
