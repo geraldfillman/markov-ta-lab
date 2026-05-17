@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -43,7 +44,11 @@ class IngestionRun:
     status: RunStatus
     started_at: str
     finished_at: str | None = None
-    symbols: list[IngestionSymbolStatus] = field(default_factory=list)
+    symbols: tuple[IngestionSymbolStatus, ...] = field(default_factory=tuple)
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.symbols, tuple):
+            object.__setattr__(self, "symbols", tuple(self.symbols))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -61,13 +66,28 @@ class IngestionRun:
 def save_ingestion_status(run: IngestionRun, path: str | Path) -> Path:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    temp_path = target.with_name(f".{target.name}.tmp")
+    temp_file = tempfile.NamedTemporaryFile(
+        "w",
+        delete=False,
+        dir=target.parent,
+        prefix=f".{target.name}.",
+        suffix=".tmp",
+        encoding="utf-8",
+    )
+    temp_path = Path(temp_file.name)
 
-    with temp_path.open("w", encoding="utf-8") as file:
-        json.dump(run.to_dict(), file, indent=2, sort_keys=True)
-        file.write("\n")
+    try:
+        with temp_file:
+            json.dump(run.to_dict(), temp_file, indent=2, sort_keys=True)
+            temp_file.write("\n")
 
-    os.replace(temp_path, target)
+        os.replace(temp_path, target)
+    except Exception:
+        try:
+            temp_path.unlink(missing_ok=True)
+        finally:
+            raise
+
     return target
 
 
