@@ -1,0 +1,10 @@
+symbol,provider_fmp,rows_fmp,first_date_fmp,last_date_fmp,total_missing_fmp,missing_Open_fmp,missing_High_fmp,missing_Low_fmp,missing_Close_fmp,missing_Volume_fmp,provider_yfinance,rows_yfinance,first_date_yfinance,last_date_yfinance,total_missing_yfinance,missing_Open_yfinance,missing_High_yfinance,missing_Low_yfinance,missing_Close_yfinance,missing_Volume_yfinance
+GLD,fmp,4117,2010-01-04,2026-05-15,0,0,0,0,0,0,yfinance,4117,2010-01-04,2026-05-15,0,0,0,0,0,0
+IWM,fmp,4117,2010-01-04,2026-05-15,0,0,0,0,0,0,yfinance,4117,2010-01-04,2026-05-15,0,0,0,0,0,0
+QQQ,fmp,4117,2010-01-04,2026-05-15,0,0,0,0,0,0,yfinance,4117,2010-01-04,2026-05-15,0,0,0,0,0,0
+SMH,fmp,4117,2010-01-04,2026-05-15,0,0,0,0,0,0,yfinance,4117,2010-01-04,2026-05-15,0,0,0,0,0,0
+SPY,fmp,4117,2010-01-04,2026-05-15,0,0,0,0,0,0,yfinance,4117,2010-01-04,2026-05-15,0,0,0,0,0,0
+TLT,fmp,4117,2010-01-04,2026-05-15,0,0,0,0,0,0,yfinance,4117,2010-01-04,2026-05-15,0,0,0,0,0,0
+XLE,fmp,4117,2010-01-04,2026-05-15,0,0,0,0,0,0,yfinance,4117,2010-01-04,2026-05-15,0,0,0,0,0,0
+XLF,fmp,4117,2010-01-04,2026-05-15,0,0,0,0,0,0,yfinance,4117,2010-01-04,2026-05-15,0,0,0,0,0,0
+XLK,fmp,4117,2010-01-04,2026-05-15,0,0,0,0,0,0,yfinance,4117,2010-01-04,2026-05-15,0,0,0,0,0,0
