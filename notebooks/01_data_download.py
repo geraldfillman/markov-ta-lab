@@ -85,6 +85,8 @@ def _missing_symbol_status(symbol: str) -> IngestionSymbolStatus:
 
 
 def _run_status(symbol_statuses: list[IngestionSymbolStatus]) -> str:
+    if all(status.status == "error" for status in symbol_statuses):
+        return "failed"
     return "partial" if any(status.status == "error" for status in symbol_statuses) else "success"
 
 
@@ -152,6 +154,9 @@ def main() -> None:
     symbol_statuses: list[IngestionSymbolStatus] = []
     try:
         data, symbol_statuses = _download_data(symbols, args.start, args.end, args.provider)
+        if not data:
+            raise RuntimeError("No usable OHLCV data returned")
+
         enriched = {
             symbol: enrich_market_data(frame)
             for symbol, frame in data.items()
@@ -165,10 +170,13 @@ def main() -> None:
 
         write_status(_run_status(symbol_statuses), symbol_statuses, finished_at=_now_iso())
     except Exception as error:
-        failed_statuses = [
-            IngestionSymbolStatus(symbol=symbol, status="error", rows=0, error=str(error))
-            for symbol in symbols
-        ]
+        if symbol_statuses and _run_status(symbol_statuses) == "failed":
+            failed_statuses = symbol_statuses
+        else:
+            failed_statuses = [
+                IngestionSymbolStatus(symbol=symbol, status="error", rows=0, error=str(error))
+                for symbol in symbols
+            ]
         write_status("failed", failed_statuses, finished_at=_now_iso())
         raise
 

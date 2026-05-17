@@ -72,6 +72,51 @@ def test_data_download_writes_ingestion_status(monkeypatch, tmp_path: Path) -> N
     assert payload["symbols"][0]["first_date"] == "2024-01-02"
 
 
+def test_data_download_writes_running_pending_status_before_download(
+    monkeypatch, tmp_path: Path
+) -> None:
+    module = _load_script_module()
+    status_path = tmp_path / "tables" / "ingestion_status.json"
+    raw_dir = tmp_path / "raw"
+    processed_dir = tmp_path / "processed"
+    writes = []
+
+    monkeypatch.setattr(
+        module,
+        "parse_args",
+        lambda: module.argparse.Namespace(
+            provider="yfinance",
+            start="2024-01-01",
+            end="2024-01-05",
+            symbols="SPY,QQQ",
+            status_path=str(status_path),
+            raw_dir=str(raw_dir),
+            processed_dir=str(processed_dir),
+        ),
+    )
+
+    def record_status(run, path):
+        writes.append(run.to_dict())
+        return path
+
+    def download_after_initial_status(symbols, start, end):
+        assert writes
+        assert writes[0]["status"] == "running"
+        assert writes[0]["finished_at"] is None
+        assert [row["symbol"] for row in writes[0]["symbols"]] == ["SPY", "QQQ"]
+        assert all(row["status"] == "pending" for row in writes[0]["symbols"])
+        return {symbol: _sample_frame() for symbol in symbols}
+
+    monkeypatch.setattr(module, "save_ingestion_status", record_status)
+    monkeypatch.setattr(module, "download_ohlcv", download_after_initial_status)
+    monkeypatch.setattr(module, "enrich_market_data", lambda frame: frame.assign(state=0))
+
+    module.main()
+
+    assert len(writes) == 2
+    assert writes[-1]["status"] == "success"
+
+
 def test_data_download_marks_all_symbols_error_when_enrichment_fails(
     monkeypatch, tmp_path: Path
 ) -> None:
@@ -112,6 +157,50 @@ def test_data_download_marks_all_symbols_error_when_enrichment_fails(
     assert [row["symbol"] for row in payload["symbols"]] == ["SPY", "QQQ"]
     assert all(row["status"] == "error" for row in payload["symbols"])
     assert all("enrichment failed" in row["error"] for row in payload["symbols"])
+
+
+@pytest.mark.parametrize("failing_writer", ["save_raw", "save_processed"])
+def test_data_download_marks_all_symbols_error_when_save_fails(
+    monkeypatch, tmp_path: Path, failing_writer: str
+) -> None:
+    module = _load_script_module()
+    status_path = tmp_path / "tables" / "ingestion_status.json"
+    raw_dir = tmp_path / "raw"
+    processed_dir = tmp_path / "processed"
+
+    monkeypatch.setattr(
+        module,
+        "parse_args",
+        lambda: module.argparse.Namespace(
+            provider="yfinance",
+            start="2024-01-01",
+            end="2024-01-05",
+            symbols="SPY,QQQ",
+            status_path=str(status_path),
+            raw_dir=str(raw_dir),
+            processed_dir=str(processed_dir),
+        ),
+    )
+    monkeypatch.setattr(
+        module,
+        "download_ohlcv",
+        lambda symbols, start, end: {symbol: _sample_frame() for symbol in symbols},
+    )
+    monkeypatch.setattr(module, "enrich_market_data", lambda frame: frame.assign(state=0))
+
+    def fail_save(data, output_dir):
+        raise RuntimeError(f"{failing_writer} failed")
+
+    monkeypatch.setattr(module, failing_writer, fail_save)
+
+    with pytest.raises(RuntimeError, match=f"{failing_writer} failed"):
+        module.main()
+
+    payload = json.loads(status_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "failed"
+    assert [row["symbol"] for row in payload["symbols"]] == ["SPY", "QQQ"]
+    assert all(row["status"] == "error" for row in payload["symbols"])
+    assert all(f"{failing_writer} failed" in row["error"] for row in payload["symbols"])
 
 
 def test_data_download_marks_missing_requested_symbol_partial(
@@ -160,6 +249,50 @@ def test_data_download_marks_missing_requested_symbol_partial(
     assert payload["symbols"][1]["status"] == "error"
     assert payload["symbols"][1]["rows"] == 0
     assert "No OHLCV rows returned for QQQ" == payload["symbols"][1]["error"]
+
+
+def test_data_download_fails_without_saving_when_all_symbol_downloads_fail(
+    monkeypatch, tmp_path: Path
+) -> None:
+    module = _load_script_module()
+    status_path = tmp_path / "tables" / "ingestion_status.json"
+    raw_dir = tmp_path / "raw"
+    processed_dir = tmp_path / "processed"
+
+    monkeypatch.setattr(
+        module,
+        "parse_args",
+        lambda: module.argparse.Namespace(
+            provider="yfinance",
+            start="2024-01-01",
+            end="2024-01-05",
+            symbols="SPY,QQQ",
+            status_path=str(status_path),
+            raw_dir=str(raw_dir),
+            processed_dir=str(processed_dir),
+        ),
+    )
+
+    def fail_download(symbols, start, end):
+        raise RuntimeError(f"No OHLCV rows returned for {symbols[0]}")
+
+    def fail_if_saving(data, output_dir):
+        raise AssertionError("empty all-error data should not be saved")
+
+    monkeypatch.setattr(module, "download_ohlcv", fail_download)
+    monkeypatch.setattr(module, "save_raw", fail_if_saving)
+    monkeypatch.setattr(module, "save_processed", fail_if_saving)
+    monkeypatch.setattr(module, "enrich_market_data", lambda frame: frame.assign(state=0))
+
+    with pytest.raises(RuntimeError, match="No usable OHLCV data returned"):
+        module.main()
+
+    payload = json.loads(status_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "failed"
+    assert [row["symbol"] for row in payload["symbols"]] == ["SPY", "QQQ"]
+    assert all(row["status"] == "error" for row in payload["symbols"])
+    assert payload["symbols"][0]["error"] == "No OHLCV rows returned for SPY"
+    assert payload["symbols"][1]["error"] == "No OHLCV rows returned for QQQ"
 
 
 def test_data_download_rejects_unsupported_provider_before_download(
