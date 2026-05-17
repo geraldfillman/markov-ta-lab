@@ -1,6 +1,6 @@
 """Tests for the Data Agent pipeline."""
 
-from pathlib import Path
+from uuid import uuid4
 
 import pandas as pd
 
@@ -11,6 +11,9 @@ from src.data import (
     save_processed,
     save_raw,
 )
+
+
+TEST_OUTPUT_ROOT = ".test_output"
 
 
 def _sample_vendor_frame() -> pd.DataFrame:
@@ -69,15 +72,16 @@ def test_missing_data_report_counts_missing_values_by_symbol():
     assert report.loc["QQQ", "missing_Close"] == 2
 
 
-def test_save_and_load_raw_and_processed_files(tmp_path: Path):
+def test_save_and_load_raw_and_processed_files():
     data = {"SPY": download_ohlcv("SPY", "2024-01-01", "2024-01-05", downloader=lambda *_: _sample_vendor_frame())["SPY"]}
-    raw_dir = tmp_path / "raw"
-    processed_dir = tmp_path / "processed"
+    run_dir = f"{TEST_OUTPUT_ROOT}/{uuid4().hex}"
+    raw_dir = f"{run_dir}/raw"
+    processed_dir = f"{run_dir}/processed"
 
     save_raw(data, raw_dir)
     save_processed(data, processed_dir)
     loaded = load_processed("SPY", processed_dir)
 
-    assert (raw_dir / "SPY.csv").exists()
-    assert (processed_dir / "SPY.parquet").exists()
+    assert pd.io.common.file_exists(f"{raw_dir}/SPY.csv")
+    assert pd.io.common.file_exists(f"{processed_dir}/SPY.parquet")
     pd.testing.assert_frame_equal(loaded, data["SPY"])

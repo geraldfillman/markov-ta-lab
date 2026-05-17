@@ -6,10 +6,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_pytest_uses_repo_local_temp_directory():
+def test_pytest_avoids_shared_temp_and_cache_directories():
     config = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
-    assert "--basetemp=.pytest_tmp" in config
+    assert "--basetemp" not in config
+    assert "-p no:cacheprovider" in config
 
 
 def test_data_download_script_bootstraps_repo_root_imports():
