@@ -15,6 +15,7 @@ build/
 # Environment
 .env
 *.env
+.venv/
 
 # Data (large files - keep .gitkeep only)
 data/raw/*.csv
