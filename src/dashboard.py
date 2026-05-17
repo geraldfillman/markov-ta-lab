@@ -1,4 +1,4 @@
-"""Static dashboard generation for Markov TA Lab reports."""
+﻿"""Static dashboard generation for Markov TA Lab reports."""
 
 from __future__ import annotations
 
@@ -349,7 +349,7 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
       </div>
       <div class="card">
         <h2>Parameter Stability (per symbol)</h2>
-        <p class="note">Higher std / wider IQR ⇒ Sharpe is sensitive to the parameter grid (less robust).</p>
+        <p class="note">Higher std / wider IQR â‡’ Sharpe is sensitive to the parameter grid (less robust).</p>
         <div class="table-wrap"><table id="stability-table"></table></div>
       </div>
       <div class="card">
