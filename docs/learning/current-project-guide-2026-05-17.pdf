@@ -1,0 +1,1808 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R 8 0 R 10 0 R 12 0 R 14 0 R 16 0 R 18 0 R 20 0 R 22 0 R 24 0 R 26 0 R] /Count 11 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 3124 >>
+stream
+BT
+/F2 15 Tf
+1 0 0 1 54 742 Tm
+(Markov TA Lab Current Project Guide) Tj
+/F1 10 Tf
+1 0 0 1 54 728 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 714 Tm
+(Date: 2026-05-17) Tj
+/F1 10 Tf
+1 0 0 1 54 700 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 686 Tm
+(This guide explains how to use the project in its current state, what has already been) Tj
+/F1 10 Tf
+1 0 0 1 54 672 Tm
+(built, what each script and module does, and where the project is going next. It is written) Tj
+/F1 10 Tf
+1 0 0 1 54 658 Tm
+(as a learning document, not just a command checklist, so it includes the reasoning behind) Tj
+/F1 10 Tf
+1 0 0 1 54 644 Tm
+(the pieces.) Tj
+/F1 10 Tf
+1 0 0 1 54 630 Tm
+() Tj
+/F2 12 Tf
+1 0 0 1 54 616 Tm
+(1. Project Goal) Tj
+/F1 10 Tf
+1 0 0 1 54 602 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 588 Tm
+(The Markov TA Lab is a Python research workspace for asking one central question:) Tj
+/F1 10 Tf
+1 0 0 1 54 574 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 560 Tm
+(When price interacts with support, resistance, or trend structure,) Tj
+/F3 10 Tf
+1 0 0 1 54 548 Tm
+(what is the probability of each next market state,) Tj
+/F3 10 Tf
+1 0 0 1 54 536 Tm
+(and does that probability create positive expected value after costs?) Tj
+/F1 10 Tf
+1 0 0 1 54 524 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 510 Tm
+(The project is not a trading bot. It is not connected to a broker. It does not place trades.) Tj
+/F1 10 Tf
+1 0 0 1 54 496 Tm
+(The goal is to build a repeatable research loop:) Tj
+/F1 10 Tf
+1 0 0 1 54 482 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 468 Tm
+(download data) Tj
+/F3 10 Tf
+1 0 0 1 54 456 Tm
+(clean data) Tj
+/F3 10 Tf
+1 0 0 1 54 444 Tm
+(compute indicators) Tj
+/F3 10 Tf
+1 0 0 1 54 432 Tm
+(detect support/resistance zones) Tj
+/F3 10 Tf
+1 0 0 1 54 420 Tm
+(label market states) Tj
+/F3 10 Tf
+1 0 0 1 54 408 Tm
+(estimate transition probabilities) Tj
+/F3 10 Tf
+1 0 0 1 54 396 Tm
+(forecast future states) Tj
+/F3 10 Tf
+1 0 0 1 54 384 Tm
+(measure expected value) Tj
+/F3 10 Tf
+1 0 0 1 54 372 Tm
+(compare against baselines) Tj
+/F3 10 Tf
+1 0 0 1 54 360 Tm
+(only then consider backtesting rules) Tj
+/F1 10 Tf
+1 0 0 1 54 348 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 334 Tm
+(The current project is through the visible Markov model phase. Expected value and) Tj
+/F1 10 Tf
+1 0 0 1 54 320 Tm
+(backtesting come next.) Tj
+/F1 10 Tf
+1 0 0 1 54 306 Tm
+() Tj
+/F2 12 Tf
+1 0 0 1 54 292 Tm
+(2. Repository Location) Tj
+/F1 10 Tf
+1 0 0 1 54 278 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 264 Tm
+(The project is here:) Tj
+/F1 10 Tf
+1 0 0 1 54 250 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 236 Tm
+(C:\\Users\\CaveUser\\Desktop\\Project Project\\markov-ta-lab) Tj
+/F1 10 Tf
+1 0 0 1 54 224 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 210 Tm
+(Start every terminal session from the repo root:) Tj
+/F1 10 Tf
+1 0 0 1 54 196 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 182 Tm
+(cd "C:\\Users\\CaveUser\\Desktop\\Project Project\\markov-ta-lab") Tj
+/F1 10 Tf
+1 0 0 1 54 170 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 156 Tm
+(The GitHub repo is:) Tj
+/F1 10 Tf
+1 0 0 1 54 142 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 128 Tm
+(https://github.com/geraldfillman/markov-ta-lab) Tj
+/F1 10 Tf
+1 0 0 1 54 116 Tm
+() Tj
+/F2 12 Tf
+1 0 0 1 54 102 Tm
+(3. Current Test Status) Tj
+/F1 10 Tf
+1 0 0 1 54 88 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 74 Tm
+(Run:) Tj
+ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 9 0 R >>
+endobj
+9 0 obj
+<< /Length 2955 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 54 742 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 728 Tm
+(python -m pytest -q) Tj
+/F1 10 Tf
+1 0 0 1 54 716 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 702 Tm
+(Current expected result:) Tj
+/F1 10 Tf
+1 0 0 1 54 688 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 674 Tm
+(38 passed, 3 skipped) Tj
+/F1 10 Tf
+1 0 0 1 54 662 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 648 Tm
+(The skipped tests are expected. They belong to the future Backtest Agent phase.) Tj
+/F1 10 Tf
+1 0 0 1 54 634 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 620 Tm
+(The tests currently verify:) Tj
+/F1 10 Tf
+1 0 0 1 54 606 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 592 Tm
+(project setup) Tj
+/F3 10 Tf
+1 0 0 1 54 580 Tm
+(CLI/script ergonomics) Tj
+/F3 10 Tf
+1 0 0 1 54 568 Tm
+(data cleaning and IO) Tj
+/F3 10 Tf
+1 0 0 1 54 556 Tm
+(technical indicators) Tj
+/F3 10 Tf
+1 0 0 1 54 544 Tm
+(support/resistance levels) Tj
+/F3 10 Tf
+1 0 0 1 54 532 Tm
+(state labeling) Tj
+/F3 10 Tf
+1 0 0 1 54 520 Tm
+(Markov transition/forecast utilities) Tj
+/F3 10 Tf
+1 0 0 1 54 508 Tm
+(module import smoke tests) Tj
+/F1 10 Tf
+1 0 0 1 54 496 Tm
+() Tj
+/F2 12 Tf
+1 0 0 1 54 482 Tm
+(4. Environment Notes) Tj
+/F1 10 Tf
+1 0 0 1 54 468 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 454 Tm
+(The project was designed for Python 3.11, but the current code built so far can run under) Tj
+/F1 10 Tf
+1 0 0 1 54 440 Tm
+(your existing Python environment too.) Tj
+/F1 10 Tf
+1 0 0 1 54 426 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 412 Tm
+(You created a .venv/ directory locally. That folder is ignored by git. It should never be) Tj
+/F1 10 Tf
+1 0 0 1 54 398 Tm
+(committed.) Tj
+/F1 10 Tf
+1 0 0 1 54 384 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 370 Tm
+(If you use PowerShell to activate a venv, use:) Tj
+/F1 10 Tf
+1 0 0 1 54 356 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 342 Tm
+(& ".\\.venv\\Scripts\\Activate.ps1") Tj
+/F1 10 Tf
+1 0 0 1 54 330 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 316 Tm
+(The & matters in PowerShell. It tells PowerShell to run the script path.) Tj
+/F1 10 Tf
+1 0 0 1 54 302 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 288 Tm
+(If package installs fail on Python 3.14, that is mostly because some later research) Tj
+/F1 10 Tf
+1 0 0 1 54 274 Tm
+(packages, such as hmmlearn and ruptures, may need prebuilt wheels or Microsoft C++ Build) Tj
+/F1 10 Tf
+1 0 0 1 54 260 Tm
+(Tools. Those packages are not needed for the current passing tests.) Tj
+/F1 10 Tf
+1 0 0 1 54 246 Tm
+() Tj
+/F2 12 Tf
+1 0 0 1 54 232 Tm
+(5. Main Script) Tj
+/F1 10 Tf
+1 0 0 1 54 218 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 204 Tm
+(The main runnable project script right now is:) Tj
+/F1 10 Tf
+1 0 0 1 54 190 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 176 Tm
+(python notebooks\\01_data_download.py) Tj
+/F1 10 Tf
+1 0 0 1 54 164 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 150 Tm
+(Even though it lives in the notebooks/ folder, it is currently a normal Python script. It is) Tj
+/F1 10 Tf
+1 0 0 1 54 136 Tm
+(not a .ipynb notebook yet.) Tj
+/F1 10 Tf
+1 0 0 1 54 122 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 108 Tm
+(When you run it, it:) Tj
+/F1 10 Tf
+1 0 0 1 54 94 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 80 Tm
+(1. Downloads OHLCV data from yfinance.) Tj
+ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 11 0 R >>
+endobj
+11 0 obj
+<< /Length 2689 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 54 742 Tm
+(2. Saves raw CSV files.) Tj
+/F1 10 Tf
+1 0 0 1 54 728 Tm
+(3. Adds technical indicators.) Tj
+/F1 10 Tf
+1 0 0 1 54 714 Tm
+(4. Adds support/resistance features.) Tj
+/F1 10 Tf
+1 0 0 1 54 700 Tm
+(5. Adds deterministic state labels.) Tj
+/F1 10 Tf
+1 0 0 1 54 686 Tm
+(6. Saves enriched parquet files.) Tj
+/F1 10 Tf
+1 0 0 1 54 672 Tm
+(7. Prints a missing-data report.) Tj
+/F1 10 Tf
+1 0 0 1 54 658 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 644 Tm
+(The first experiment universe is:) Tj
+/F1 10 Tf
+1 0 0 1 54 630 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 616 Tm
+(SPY) Tj
+/F3 10 Tf
+1 0 0 1 54 604 Tm
+(QQQ) Tj
+/F3 10 Tf
+1 0 0 1 54 592 Tm
+(IWM) Tj
+/F3 10 Tf
+1 0 0 1 54 580 Tm
+(XLK) Tj
+/F3 10 Tf
+1 0 0 1 54 568 Tm
+(SMH) Tj
+/F3 10 Tf
+1 0 0 1 54 556 Tm
+(XLE) Tj
+/F3 10 Tf
+1 0 0 1 54 544 Tm
+(XLF) Tj
+/F3 10 Tf
+1 0 0 1 54 532 Tm
+(GLD) Tj
+/F3 10 Tf
+1 0 0 1 54 520 Tm
+(TLT) Tj
+/F1 10 Tf
+1 0 0 1 54 508 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 494 Tm
+(Raw files are saved here:) Tj
+/F1 10 Tf
+1 0 0 1 54 480 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 466 Tm
+(data/raw/*.csv) Tj
+/F1 10 Tf
+1 0 0 1 54 454 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 440 Tm
+(Processed files are saved here:) Tj
+/F1 10 Tf
+1 0 0 1 54 426 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 412 Tm
+(data/processed/*.parquet) Tj
+/F1 10 Tf
+1 0 0 1 54 400 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 386 Tm
+(Both raw and processed generated data files are ignored by git.) Tj
+/F1 10 Tf
+1 0 0 1 54 372 Tm
+() Tj
+/F2 12 Tf
+1 0 0 1 54 358 Tm
+(6. What yfinance Provides) Tj
+/F1 10 Tf
+1 0 0 1 54 344 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 330 Tm
+(yfinance provides the raw market candles:) Tj
+/F1 10 Tf
+1 0 0 1 54 316 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 302 Tm
+(Date) Tj
+/F3 10 Tf
+1 0 0 1 54 290 Tm
+(Open) Tj
+/F3 10 Tf
+1 0 0 1 54 278 Tm
+(High) Tj
+/F3 10 Tf
+1 0 0 1 54 266 Tm
+(Low) Tj
+/F3 10 Tf
+1 0 0 1 54 254 Tm
+(Close) Tj
+/F3 10 Tf
+1 0 0 1 54 242 Tm
+(Volume) Tj
+/F1 10 Tf
+1 0 0 1 54 230 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 216 Tm
+(This is enough for the first research system. The project computes the technical features) Tj
+/F1 10 Tf
+1 0 0 1 54 202 Tm
+(itself. yfinance does not give us Markov states, support/resistance zones, ATR distances,) Tj
+/F1 10 Tf
+1 0 0 1 54 188 Tm
+(expected value, or transition probabilities. Those are derived from the OHLCV data.) Tj
+/F1 10 Tf
+1 0 0 1 54 174 Tm
+() Tj
+/F2 12 Tf
+1 0 0 1 54 160 Tm
+(7. Current Pipeline Flow) Tj
+/F1 10 Tf
+1 0 0 1 54 146 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 132 Tm
+(The pipeline currently flows like this:) Tj
+/F1 10 Tf
+1 0 0 1 54 118 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 104 Tm
+(yfinance) Tj
+/F3 10 Tf
+1 0 0 1 54 92 Tm
+(  -> src.data.download_ohlcv) Tj
+/F3 10 Tf
+1 0 0 1 54 80 Tm
+(  -> src.indicators.add_indicators) Tj
+/F3 10 Tf
+1 0 0 1 54 68 Tm
+(  -> src.levels.detect_levels) Tj
+ET
+endstream
+endobj
+12 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 13 0 R >>
+endobj
+13 0 obj
+<< /Length 2614 >>
+stream
+BT
+/F3 10 Tf
+1 0 0 1 54 742 Tm
+(  -> src.states.label_states) Tj
+/F3 10 Tf
+1 0 0 1 54 730 Tm
+(  -> data/processed/*.parquet) Tj
+/F3 10 Tf
+1 0 0 1 54 718 Tm
+(  -> src.markov can estimate probabilities from the state column) Tj
+/F1 10 Tf
+1 0 0 1 54 706 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 692 Tm
+(The Markov functions are implemented as library functions. They are not yet wired into the) Tj
+/F1 10 Tf
+1 0 0 1 54 678 Tm
+(main data download script.) Tj
+/F1 10 Tf
+1 0 0 1 54 664 Tm
+() Tj
+/F2 12 Tf
+1 0 0 1 54 650 Tm
+(8. Module-by-Module Guide) Tj
+/F1 10 Tf
+1 0 0 1 54 636 Tm
+() Tj
+/F2 11 Tf
+1 0 0 1 54 622 Tm
+(8.1 `src/data.py`) Tj
+/F1 10 Tf
+1 0 0 1 54 608 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 594 Tm
+(Purpose:) Tj
+/F1 10 Tf
+1 0 0 1 54 580 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 566 Tm
+(Download, normalize, save, load, and report on OHLCV data.) Tj
+/F1 10 Tf
+1 0 0 1 54 554 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 540 Tm
+(Important functions:) Tj
+/F1 10 Tf
+1 0 0 1 54 526 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 512 Tm
+(download_ohlcv\(symbols, start, end\)) Tj
+/F3 10 Tf
+1 0 0 1 54 500 Tm
+(save_raw\(data\)) Tj
+/F3 10 Tf
+1 0 0 1 54 488 Tm
+(save_processed\(data\)) Tj
+/F3 10 Tf
+1 0 0 1 54 476 Tm
+(load_processed\(symbol\)) Tj
+/F3 10 Tf
+1 0 0 1 54 464 Tm
+(missing_data_report\(data\)) Tj
+/F1 10 Tf
+1 0 0 1 54 452 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 438 Tm
+(The Data Agent normalizes downloaded data into:) Tj
+/F1 10 Tf
+1 0 0 1 54 424 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 410 Tm
+(Open) Tj
+/F3 10 Tf
+1 0 0 1 54 398 Tm
+(High) Tj
+/F3 10 Tf
+1 0 0 1 54 386 Tm
+(Low) Tj
+/F3 10 Tf
+1 0 0 1 54 374 Tm
+(Close) Tj
+/F3 10 Tf
+1 0 0 1 54 362 Tm
+(Volume) Tj
+/F1 10 Tf
+1 0 0 1 54 350 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 336 Tm
+(It sorts dates, drops rows missing required OHLCV values, saves raw CSV files, and saves) Tj
+/F1 10 Tf
+1 0 0 1 54 322 Tm
+(processed parquet files.) Tj
+/F1 10 Tf
+1 0 0 1 54 308 Tm
+() Tj
+/F2 11 Tf
+1 0 0 1 54 294 Tm
+(8.2 `src/indicators.py`) Tj
+/F1 10 Tf
+1 0 0 1 54 280 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 266 Tm
+(Purpose:) Tj
+/F1 10 Tf
+1 0 0 1 54 252 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 238 Tm
+(Compute technical indicators from OHLCV data.) Tj
+/F1 10 Tf
+1 0 0 1 54 226 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 212 Tm
+(Currently computed:) Tj
+/F1 10 Tf
+1 0 0 1 54 198 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 184 Tm
+(sma_20) Tj
+/F3 10 Tf
+1 0 0 1 54 172 Tm
+(sma_50) Tj
+/F3 10 Tf
+1 0 0 1 54 160 Tm
+(sma_200) Tj
+/F3 10 Tf
+1 0 0 1 54 148 Tm
+(ema_20) Tj
+/F3 10 Tf
+1 0 0 1 54 136 Tm
+(atr_14) Tj
+/F3 10 Tf
+1 0 0 1 54 124 Tm
+(rsi_14) Tj
+/F3 10 Tf
+1 0 0 1 54 112 Tm
+(bb_width_20) Tj
+/F3 10 Tf
+1 0 0 1 54 100 Tm
+(return_1d) Tj
+/F3 10 Tf
+1 0 0 1 54 88 Tm
+(return_5d) Tj
+/F3 10 Tf
+1 0 0 1 54 76 Tm
+(return_10d) Tj
+ET
+endstream
+endobj
+14 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 15 0 R >>
+endobj
+15 0 obj
+<< /Length 2689 >>
+stream
+BT
+/F3 10 Tf
+1 0 0 1 54 742 Tm
+(realized_vol_20) Tj
+/F3 10 Tf
+1 0 0 1 54 730 Tm
+(volume_zscore_20) Tj
+/F3 10 Tf
+1 0 0 1 54 718 Tm
+(dist_to_sma_20) Tj
+/F3 10 Tf
+1 0 0 1 54 706 Tm
+(dist_to_sma_50) Tj
+/F3 10 Tf
+1 0 0 1 54 694 Tm
+(dist_to_sma_200) Tj
+/F1 10 Tf
+1 0 0 1 54 682 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 668 Tm
+(Important idea:) Tj
+/F1 10 Tf
+1 0 0 1 54 654 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 640 Tm
+(All indicators are aligned to the current timestamp and use current or prior data) Tj
+/F3 10 Tf
+1 0 0 1 54 628 Tm
+(only.) Tj
+/F1 10 Tf
+1 0 0 1 54 616 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 602 Tm
+(No indicator should use tomorrow's price to describe today's setup.) Tj
+/F1 10 Tf
+1 0 0 1 54 588 Tm
+() Tj
+/F2 11 Tf
+1 0 0 1 54 574 Tm
+(8.3 `src/levels.py`) Tj
+/F1 10 Tf
+1 0 0 1 54 560 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 546 Tm
+(Purpose:) Tj
+/F1 10 Tf
+1 0 0 1 54 532 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 518 Tm
+(Compute support and resistance zones using only prior data.) Tj
+/F1 10 Tf
+1 0 0 1 54 506 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 492 Tm
+(Current simple model:) Tj
+/F1 10 Tf
+1 0 0 1 54 478 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 464 Tm
+(nearest_resistance = prior rolling high) Tj
+/F3 10 Tf
+1 0 0 1 54 452 Tm
+(nearest_support = prior rolling low) Tj
+/F1 10 Tf
+1 0 0 1 54 440 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 426 Tm
+(The important guardrail is .shift\(1\). That means today's high or low cannot become today's) Tj
+/F1 10 Tf
+1 0 0 1 54 412 Tm
+(support/resistance.) Tj
+/F1 10 Tf
+1 0 0 1 54 398 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 384 Tm
+(Currently computed:) Tj
+/F1 10 Tf
+1 0 0 1 54 370 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 356 Tm
+(nearest_support) Tj
+/F3 10 Tf
+1 0 0 1 54 344 Tm
+(nearest_resistance) Tj
+/F3 10 Tf
+1 0 0 1 54 332 Tm
+(support_zone_low) Tj
+/F3 10 Tf
+1 0 0 1 54 320 Tm
+(support_zone_high) Tj
+/F3 10 Tf
+1 0 0 1 54 308 Tm
+(resistance_zone_low) Tj
+/F3 10 Tf
+1 0 0 1 54 296 Tm
+(resistance_zone_high) Tj
+/F3 10 Tf
+1 0 0 1 54 284 Tm
+(dist_to_support_atr) Tj
+/F3 10 Tf
+1 0 0 1 54 272 Tm
+(dist_to_resistance_atr) Tj
+/F1 10 Tf
+1 0 0 1 54 260 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 246 Tm
+(Zones are ATR-normalized. Support and resistance are not treated as exact single-price) Tj
+/F1 10 Tf
+1 0 0 1 54 232 Tm
+(lines.) Tj
+/F1 10 Tf
+1 0 0 1 54 218 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 204 Tm
+(Example:) Tj
+/F1 10 Tf
+1 0 0 1 54 190 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 176 Tm
+(resistance = 749.53) Tj
+/F3 10 Tf
+1 0 0 1 54 164 Tm
+(ATR = 7.20) Tj
+/F3 10 Tf
+1 0 0 1 54 152 Tm
+(zone width = 0.5 * ATR = 3.60) Tj
+/F3 10 Tf
+1 0 0 1 54 140 Tm
+(resistance zone = 745.93 to 753.13) Tj
+/F1 10 Tf
+1 0 0 1 54 128 Tm
+() Tj
+/F2 11 Tf
+1 0 0 1 54 114 Tm
+(8.4 `src/states.py`) Tj
+/F1 10 Tf
+1 0 0 1 54 100 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 86 Tm
+(Purpose:) Tj
+/F1 10 Tf
+1 0 0 1 54 72 Tm
+() Tj
+ET
+endstream
+endobj
+16 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 17 0 R >>
+endobj
+17 0 obj
+<< /Length 2934 >>
+stream
+BT
+/F3 10 Tf
+1 0 0 1 54 742 Tm
+(Label every bar into exactly one deterministic market state.) Tj
+/F1 10 Tf
+1 0 0 1 54 730 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 716 Tm
+(Current state map:) Tj
+/F1 10 Tf
+1 0 0 1 54 702 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 688 Tm
+(0  FAR_FROM_LEVEL) Tj
+/F3 10 Tf
+1 0 0 1 54 676 Tm
+(1  APPROACHING_SUPPORT) Tj
+/F3 10 Tf
+1 0 0 1 54 664 Tm
+(2  TOUCHING_SUPPORT) Tj
+/F3 10 Tf
+1 0 0 1 54 652 Tm
+(3  SUPPORT_RECLAIM) Tj
+/F3 10 Tf
+1 0 0 1 54 640 Tm
+(4  SUPPORT_BREAKDOWN) Tj
+/F3 10 Tf
+1 0 0 1 54 628 Tm
+(5  APPROACHING_RESISTANCE) Tj
+/F3 10 Tf
+1 0 0 1 54 616 Tm
+(6  COMPRESSION_BELOW_RESISTANCE) Tj
+/F3 10 Tf
+1 0 0 1 54 604 Tm
+(7  RESISTANCE_BREAKOUT) Tj
+/F3 10 Tf
+1 0 0 1 54 592 Tm
+(8  BREAKOUT_RETEST) Tj
+/F3 10 Tf
+1 0 0 1 54 580 Tm
+(9  FAILED_BREAKOUT) Tj
+/F3 10 Tf
+1 0 0 1 54 568 Tm
+(10 CONTINUATION) Tj
+/F3 10 Tf
+1 0 0 1 54 556 Tm
+(11 CHOP_OR_NO_EDGE) Tj
+/F1 10 Tf
+1 0 0 1 54 544 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 530 Tm
+(Important functions:) Tj
+/F1 10 Tf
+1 0 0 1 54 516 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 502 Tm
+(label_states\(df\)) Tj
+/F3 10 Tf
+1 0 0 1 54 490 Tm
+(state_frequency_report\(states\)) Tj
+/F3 10 Tf
+1 0 0 1 54 478 Tm
+(flag_rare_states\(states\)) Tj
+/F1 10 Tf
+1 0 0 1 54 466 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 452 Tm
+(The first state rules are intentionally simple and deterministic. They are not optimized) Tj
+/F1 10 Tf
+1 0 0 1 54 438 Tm
+(yet. Their job is to create a clean, testable state sequence that can feed the Markov model.) Tj
+/F1 10 Tf
+1 0 0 1 54 424 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 410 Tm
+(Important design choice:) Tj
+/F1 10 Tf
+1 0 0 1 54 396 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 382 Tm
+(Every row gets exactly one state.) Tj
+/F1 10 Tf
+1 0 0 1 54 370 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 356 Tm
+(If a row is missing warm-up features, it becomes:) Tj
+/F1 10 Tf
+1 0 0 1 54 342 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 328 Tm
+(CHOP_OR_NO_EDGE) Tj
+/F1 10 Tf
+1 0 0 1 54 316 Tm
+() Tj
+/F2 11 Tf
+1 0 0 1 54 302 Tm
+(8.5 `src/markov.py`) Tj
+/F1 10 Tf
+1 0 0 1 54 288 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 274 Tm
+(Purpose:) Tj
+/F1 10 Tf
+1 0 0 1 54 260 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 246 Tm
+(Estimate transition probabilities from the state sequence.) Tj
+/F1 10 Tf
+1 0 0 1 54 234 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 220 Tm
+(Important functions:) Tj
+/F1 10 Tf
+1 0 0 1 54 206 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 192 Tm
+(estimate_transition_matrix\(states, n_states, alpha=0.0\)) Tj
+/F3 10 Tf
+1 0 0 1 54 180 Tm
+(forecast_state_probs\(P, current_state, horizon\)) Tj
+/F3 10 Tf
+1 0 0 1 54 168 Tm
+(stationary_distribution\(P\)) Tj
+/F3 10 Tf
+1 0 0 1 54 156 Tm
+(walkforward_forecasts\(states, n_states, lookback, horizons=\(1, 5, 10, 20\)\)) Tj
+/F1 10 Tf
+1 0 0 1 54 144 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 130 Tm
+(The transition matrix answers:) Tj
+/F1 10 Tf
+1 0 0 1 54 116 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 102 Tm
+(Given the current state, how often did the next bar move into each possible state?) Tj
+/F1 10 Tf
+1 0 0 1 54 90 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 76 Tm
+(Example concept:) Tj
+ET
+endstream
+endobj
+18 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 19 0 R >>
+endobj
+19 0 obj
+<< /Length 3544 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 54 742 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 728 Tm
+(FAILED_BREAKOUT -> FAR_FROM_LEVEL: 42.66%) Tj
+/F3 10 Tf
+1 0 0 1 54 716 Tm
+(FAILED_BREAKOUT -> BREAKOUT_RETEST: 18.80%) Tj
+/F3 10 Tf
+1 0 0 1 54 704 Tm
+(FAILED_BREAKOUT -> FAILED_BREAKOUT: 14.63%) Tj
+/F1 10 Tf
+1 0 0 1 54 692 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 678 Tm
+(Multi-step forecasts use matrix powers:) Tj
+/F1 10 Tf
+1 0 0 1 54 664 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 650 Tm
+(P^5) Tj
+/F3 10 Tf
+1 0 0 1 54 638 Tm
+(P^10) Tj
+/F3 10 Tf
+1 0 0 1 54 626 Tm
+(P^20) Tj
+/F1 10 Tf
+1 0 0 1 54 614 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 600 Tm
+(Walk-forward forecasts estimate the matrix from only prior states. That avoids lookahead) Tj
+/F1 10 Tf
+1 0 0 1 54 586 Tm
+(bias.) Tj
+/F1 10 Tf
+1 0 0 1 54 572 Tm
+() Tj
+/F2 12 Tf
+1 0 0 1 54 558 Tm
+(9. How To Inspect Processed Data) Tj
+/F1 10 Tf
+1 0 0 1 54 544 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 530 Tm
+(Run the pipeline:) Tj
+/F1 10 Tf
+1 0 0 1 54 516 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 502 Tm
+(python notebooks\\01_data_download.py) Tj
+/F1 10 Tf
+1 0 0 1 54 490 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 476 Tm
+(Then inspect SPY:) Tj
+/F1 10 Tf
+1 0 0 1 54 462 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 448 Tm
+(python -c "import pandas as pd; df=pd.read_parquet\('data/processed/SPY.parquet'\); prin) Tj
+/F3 10 Tf
+1 0 0 1 54 436 Tm
+(t\(df.tail\(\)[['Close','sma_20','atr_14','nearest_support','nearest_resistance','state']) Tj
+/F3 10 Tf
+1 0 0 1 54 424 Tm
+(]\)") Tj
+/F1 10 Tf
+1 0 0 1 54 412 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 398 Tm
+(To see state names:) Tj
+/F1 10 Tf
+1 0 0 1 54 384 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 370 Tm
+(python -c "import pandas as pd; from src.config import STATE_LABELS;) Tj
+/F3 10 Tf
+1 0 0 1 54 358 Tm
+(df=pd.read_parquet\('data/processed/SPY.parquet'\); print\({i: STATE_LABELS[i] for i in) Tj
+/F3 10 Tf
+1 0 0 1 54 346 Tm
+(sorted\(df['state'].dropna\(\).astype\(int\).unique\(\)\)}\)") Tj
+/F1 10 Tf
+1 0 0 1 54 334 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 320 Tm
+(To inspect one date:) Tj
+/F1 10 Tf
+1 0 0 1 54 306 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 292 Tm
+(python -c "import pandas as pd; from src.config import STATE_LABELS;) Tj
+/F3 10 Tf
+1 0 0 1 54 280 Tm
+(df=pd.read_parquet\('data/processed/SPY.parquet'\); dt=pd.Timestamp\('2025-12-31'\);) Tj
+/F3 10 Tf
+1 0 0 1 54 268 Tm
+(row=df.loc[dt]; print\(row[['Close','nearest_support','nearest_resistance','dist_to_sup) Tj
+/F3 10 Tf
+1 0 0 1 54 256 Tm
+(port_atr','dist_to_resistance_atr','state']]\); print\('label:',) Tj
+/F3 10 Tf
+1 0 0 1 54 244 Tm
+(STATE_LABELS[int\(row['state']\)]\)") Tj
+/F1 10 Tf
+1 0 0 1 54 232 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 218 Tm
+(Note: the default DEFAULT_END is currently 2025-12-31, so the saved processed data from the) Tj
+/F1 10 Tf
+1 0 0 1 54 204 Tm
+(script will not include May 2026 unless the date range is changed or a direct pull is run.) Tj
+/F1 10 Tf
+1 0 0 1 54 190 Tm
+() Tj
+/F2 12 Tf
+1 0 0 1 54 176 Tm
+(10. How To Run A Direct Markov Smoke Check) Tj
+/F1 10 Tf
+1 0 0 1 54 162 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 148 Tm
+(This command downloads SPY, computes indicators, levels, states, and a 5-step Markov) Tj
+/F1 10 Tf
+1 0 0 1 54 134 Tm
+(forecast:) Tj
+/F1 10 Tf
+1 0 0 1 54 120 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 106 Tm
+(python -c "from src.config import N_STATES, STATE_LABELS; from src.data import) Tj
+/F3 10 Tf
+1 0 0 1 54 94 Tm
+(download_ohlcv; from src.indicators import add_indicators; from src.levels import) Tj
+/F3 10 Tf
+1 0 0 1 54 82 Tm
+(detect_levels; from src.states import label_states; from src.markov import) Tj
+/F3 10 Tf
+1 0 0 1 54 70 Tm
+(estimate_transition_matrix, forecast_state_probs; data=download_ohlcv\(['SPY'],) Tj
+ET
+endstream
+endobj
+20 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 21 0 R >>
+endobj
+21 0 obj
+<< /Length 3135 >>
+stream
+BT
+/F3 10 Tf
+1 0 0 1 54 742 Tm
+('2024-01-01', '2026-05-16'\); frame=detect_levels\(add_indicators\(data['SPY']\)\);) Tj
+/F3 10 Tf
+1 0 0 1 54 730 Tm
+(states=label_states\(frame\); P=estimate_transition_matrix\(states, N_STATES,) Tj
+/F3 10 Tf
+1 0 0 1 54 718 Tm
+(alpha=1e-6\); current=int\(states.iloc[-1]\); probs=forecast_state_probs\(P, current, 5\);) Tj
+/F3 10 Tf
+1 0 0 1 54 706 Tm
+(print\('current_state', current, STATE_LABELS[current]\);) Tj
+/F3 10 Tf
+1 0 0 1 54 694 Tm
+(print\(sorted\([\(STATE_LABELS[i], round\(float\(p\),4\)\) for i,p in enumerate\(probs\)],) Tj
+/F3 10 Tf
+1 0 0 1 54 682 Tm
+(key=lambda x: x[1], reverse=True\)[:5]\)") Tj
+/F1 10 Tf
+1 0 0 1 54 670 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 656 Tm
+(Recent smoke-check result:) Tj
+/F1 10 Tf
+1 0 0 1 54 642 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 628 Tm
+(current_state 9 FAILED_BREAKOUT) Tj
+/F3 10 Tf
+1 0 0 1 54 616 Tm
+(top 5-step forecast:) Tj
+/F3 10 Tf
+1 0 0 1 54 604 Tm
+(FAR_FROM_LEVEL              0.4266) Tj
+/F3 10 Tf
+1 0 0 1 54 592 Tm
+(BREAKOUT_RETEST            0.1880) Tj
+/F3 10 Tf
+1 0 0 1 54 580 Tm
+(FAILED_BREAKOUT            0.1463) Tj
+/F3 10 Tf
+1 0 0 1 54 568 Tm
+(APPROACHING_RESISTANCE     0.1203) Tj
+/F3 10 Tf
+1 0 0 1 54 556 Tm
+(COMPRESSION_BELOW_RESISTANCE 0.0729) Tj
+/F1 10 Tf
+1 0 0 1 54 544 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 530 Tm
+(This is not a trading signal yet. It is only a probability map from the current) Tj
+/F1 10 Tf
+1 0 0 1 54 516 Tm
+(deterministic state model.) Tj
+/F1 10 Tf
+1 0 0 1 54 502 Tm
+() Tj
+/F2 12 Tf
+1 0 0 1 54 488 Tm
+(11. What Has Not Been Built Yet) Tj
+/F1 10 Tf
+1 0 0 1 54 474 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 460 Tm
+(Not built yet:) Tj
+/F1 10 Tf
+1 0 0 1 54 446 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 432 Tm
+(expected value tables) Tj
+/F3 10 Tf
+1 0 0 1 54 420 Tm
+(forward return evaluation) Tj
+/F3 10 Tf
+1 0 0 1 54 408 Tm
+(trade rules) Tj
+/F3 10 Tf
+1 0 0 1 54 396 Tm
+(backtesting) Tj
+/F3 10 Tf
+1 0 0 1 54 384 Tm
+(benchmark comparison) Tj
+/F3 10 Tf
+1 0 0 1 54 372 Tm
+(parameter sweeps) Tj
+/F3 10 Tf
+1 0 0 1 54 360 Tm
+(HMM regimes) Tj
+/F3 10 Tf
+1 0 0 1 54 348 Tm
+(change-point detection) Tj
+/F3 10 Tf
+1 0 0 1 54 336 Tm
+(volatility filters) Tj
+/F3 10 Tf
+1 0 0 1 54 324 Tm
+(macro filters) Tj
+/F3 10 Tf
+1 0 0 1 54 312 Tm
+(report generation) Tj
+/F1 10 Tf
+1 0 0 1 54 300 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 286 Tm
+(This is intentional. The project is being built in layers so we can verify each piece.) Tj
+/F1 10 Tf
+1 0 0 1 54 272 Tm
+() Tj
+/F2 12 Tf
+1 0 0 1 54 258 Tm
+(12. Current Git State) Tj
+/F1 10 Tf
+1 0 0 1 54 244 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 230 Tm
+(Recent completed phases:) Tj
+/F1 10 Tf
+1 0 0 1 54 216 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 202 Tm
+(data pipeline) Tj
+/F3 10 Tf
+1 0 0 1 54 190 Tm
+(technical indicators) Tj
+/F3 10 Tf
+1 0 0 1 54 178 Tm
+(support/resistance levels) Tj
+/F3 10 Tf
+1 0 0 1 54 166 Tm
+(state labeling) Tj
+/F3 10 Tf
+1 0 0 1 54 154 Tm
+(Markov transition and forecast utilities) Tj
+/F1 10 Tf
+1 0 0 1 54 142 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 128 Tm
+(Generated local files ignored by git:) Tj
+/F1 10 Tf
+1 0 0 1 54 114 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 100 Tm
+(.venv/) Tj
+/F3 10 Tf
+1 0 0 1 54 88 Tm
+(.pytest_cache/) Tj
+/F3 10 Tf
+1 0 0 1 54 76 Tm
+(.pytest_tmp/) Tj
+ET
+endstream
+endobj
+22 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 23 0 R >>
+endobj
+23 0 obj
+<< /Length 2779 >>
+stream
+BT
+/F3 10 Tf
+1 0 0 1 54 742 Tm
+(.test_output/) Tj
+/F3 10 Tf
+1 0 0 1 54 730 Tm
+(data/raw/*.csv) Tj
+/F3 10 Tf
+1 0 0 1 54 718 Tm
+(data/processed/*.parquet) Tj
+/F1 10 Tf
+1 0 0 1 54 706 Tm
+() Tj
+/F2 12 Tf
+1 0 0 1 54 692 Tm
+(13. How To Think About The Current Model) Tj
+/F1 10 Tf
+1 0 0 1 54 678 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 664 Tm
+(Right now the system can answer:) Tj
+/F1 10 Tf
+1 0 0 1 54 650 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 636 Tm
+(What state is each historical bar in?) Tj
+/F3 10 Tf
+1 0 0 1 54 624 Tm
+(How often does each state transition to another state?) Tj
+/F3 10 Tf
+1 0 0 1 54 612 Tm
+(Given today's state, what are the 1-step and multi-step future state probabilities?) Tj
+/F1 10 Tf
+1 0 0 1 54 600 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 586 Tm
+(It cannot yet answer:) Tj
+/F1 10 Tf
+1 0 0 1 54 572 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 558 Tm
+(Is this setup profitable?) Tj
+/F3 10 Tf
+1 0 0 1 54 546 Tm
+(Does it beat a simple breakout rule?) Tj
+/F3 10 Tf
+1 0 0 1 54 534 Tm
+(What is the expected return after costs?) Tj
+/F3 10 Tf
+1 0 0 1 54 522 Tm
+(What is the drawdown profile?) Tj
+/F3 10 Tf
+1 0 0 1 54 510 Tm
+(Should a simulated strategy enter or exit?) Tj
+/F1 10 Tf
+1 0 0 1 54 498 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 484 Tm
+(Those questions belong to the next two phases: Expected Value Agent and Backtest Agent.) Tj
+/F1 10 Tf
+1 0 0 1 54 470 Tm
+() Tj
+/F2 12 Tf
+1 0 0 1 54 456 Tm
+(14. Roadmap For Tomorrow) Tj
+/F1 10 Tf
+1 0 0 1 54 442 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 428 Tm
+(Target date: 2026-05-18) Tj
+/F1 10 Tf
+1 0 0 1 54 414 Tm
+() Tj
+/F2 11 Tf
+1 0 0 1 54 400 Tm
+(Phase 1: Expected Value Agent) Tj
+/F1 10 Tf
+1 0 0 1 54 386 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 372 Tm
+(Primary file:) Tj
+/F1 10 Tf
+1 0 0 1 54 358 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 344 Tm
+(src/metrics.py) Tj
+/F1 10 Tf
+1 0 0 1 54 332 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 318 Tm
+(Tests:) Tj
+/F1 10 Tf
+1 0 0 1 54 304 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 290 Tm
+(tests/test_metrics.py) Tj
+/F1 10 Tf
+1 0 0 1 54 278 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 264 Tm
+(Build:) Tj
+/F1 10 Tf
+1 0 0 1 54 250 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 236 Tm
+(forward_return_5) Tj
+/F3 10 Tf
+1 0 0 1 54 224 Tm
+(forward_return_10) Tj
+/F3 10 Tf
+1 0 0 1 54 212 Tm
+(forward_return_20) Tj
+/F3 10 Tf
+1 0 0 1 54 200 Tm
+(average forward return by state) Tj
+/F3 10 Tf
+1 0 0 1 54 188 Tm
+(win rate by state) Tj
+/F3 10 Tf
+1 0 0 1 54 176 Tm
+(average win) Tj
+/F3 10 Tf
+1 0 0 1 54 164 Tm
+(average loss) Tj
+/F3 10 Tf
+1 0 0 1 54 152 Tm
+(expected value after costs) Tj
+/F3 10 Tf
+1 0 0 1 54 140 Tm
+(sample count by state) Tj
+/F3 10 Tf
+1 0 0 1 54 128 Tm
+(rare-state warnings) Tj
+/F1 10 Tf
+1 0 0 1 54 116 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 102 Tm
+(The important question:) Tj
+/F1 10 Tf
+1 0 0 1 54 88 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 74 Tm
+(Which states historically had positive average forward returns after estimated costs?) Tj
+ET
+endstream
+endobj
+24 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 25 0 R >>
+endobj
+25 0 obj
+<< /Length 2509 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 54 742 Tm
+() Tj
+/F2 11 Tf
+1 0 0 1 54 728 Tm
+(Phase 2: First State Expectancy Table) Tj
+/F1 10 Tf
+1 0 0 1 54 714 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 700 Tm
+(Create a table like:) Tj
+/F1 10 Tf
+1 0 0 1 54 686 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 672 Tm
+(state) Tj
+/F3 10 Tf
+1 0 0 1 54 660 Tm
+(label) Tj
+/F3 10 Tf
+1 0 0 1 54 648 Tm
+(count) Tj
+/F3 10 Tf
+1 0 0 1 54 636 Tm
+(avg_forward_return_5) Tj
+/F3 10 Tf
+1 0 0 1 54 624 Tm
+(avg_forward_return_10) Tj
+/F3 10 Tf
+1 0 0 1 54 612 Tm
+(win_rate_5) Tj
+/F3 10 Tf
+1 0 0 1 54 600 Tm
+(avg_win_5) Tj
+/F3 10 Tf
+1 0 0 1 54 588 Tm
+(avg_loss_5) Tj
+/F3 10 Tf
+1 0 0 1 54 576 Tm
+(ev_after_cost_5) Tj
+/F3 10 Tf
+1 0 0 1 54 564 Tm
+(ev_after_cost_10) Tj
+/F1 10 Tf
+1 0 0 1 54 552 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 538 Tm
+(Save to:) Tj
+/F1 10 Tf
+1 0 0 1 54 524 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 510 Tm
+(reports/tables/) Tj
+/F1 10 Tf
+1 0 0 1 54 498 Tm
+() Tj
+/F2 11 Tf
+1 0 0 1 54 484 Tm
+(Phase 3: Markov Plus Expected Value) Tj
+/F1 10 Tf
+1 0 0 1 54 470 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 456 Tm
+(Combine:) Tj
+/F1 10 Tf
+1 0 0 1 54 442 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 428 Tm
+(current state) Tj
+/F3 10 Tf
+1 0 0 1 54 416 Tm
+(forecast probabilities) Tj
+/F3 10 Tf
+1 0 0 1 54 404 Tm
+(historical forward return by destination/current state) Tj
+/F3 10 Tf
+1 0 0 1 54 392 Tm
+(expected value after costs) Tj
+/F1 10 Tf
+1 0 0 1 54 380 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 366 Tm
+(This begins to answer:) Tj
+/F1 10 Tf
+1 0 0 1 54 352 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 338 Tm
+(If the model thinks continuation is more likely, does that actually imply positive) Tj
+/F3 10 Tf
+1 0 0 1 54 326 Tm
+(expected value?) Tj
+/F1 10 Tf
+1 0 0 1 54 314 Tm
+() Tj
+/F2 11 Tf
+1 0 0 1 54 300 Tm
+(Phase 4: First Human-Readable Experiment Report) Tj
+/F1 10 Tf
+1 0 0 1 54 286 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 272 Tm
+(Create a first report in:) Tj
+/F1 10 Tf
+1 0 0 1 54 258 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 244 Tm
+(reports/runs/) Tj
+/F1 10 Tf
+1 0 0 1 54 232 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 218 Tm
+(Include:) Tj
+/F1 10 Tf
+1 0 0 1 54 204 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 190 Tm
+(question) Tj
+/F3 10 Tf
+1 0 0 1 54 178 Tm
+(hypothesis) Tj
+/F3 10 Tf
+1 0 0 1 54 166 Tm
+(data used) Tj
+/F3 10 Tf
+1 0 0 1 54 154 Tm
+(state definitions) Tj
+/F3 10 Tf
+1 0 0 1 54 142 Tm
+(transition matrix summary) Tj
+/F3 10 Tf
+1 0 0 1 54 130 Tm
+(state expectancy table) Tj
+/F3 10 Tf
+1 0 0 1 54 118 Tm
+(what worked) Tj
+/F3 10 Tf
+1 0 0 1 54 106 Tm
+(what failed) Tj
+/F3 10 Tf
+1 0 0 1 54 94 Tm
+(bias checks) Tj
+/F3 10 Tf
+1 0 0 1 54 82 Tm
+(next experiment) Tj
+/F1 10 Tf
+1 0 0 1 54 70 Tm
+() Tj
+ET
+endstream
+endobj
+26 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 27 0 R >>
+endobj
+27 0 obj
+<< /Length 1986 >>
+stream
+BT
+/F2 11 Tf
+1 0 0 1 54 742 Tm
+(Phase 5: Prepare Backtest Agent) Tj
+/F1 10 Tf
+1 0 0 1 54 728 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 714 Tm
+(Only after Expected Value Agent is working, start Backtest Agent.) Tj
+/F1 10 Tf
+1 0 0 1 54 700 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 686 Tm
+(The first backtest should be narrow:) Tj
+/F1 10 Tf
+1 0 0 1 54 672 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 658 Tm
+(long-only) Tj
+/F3 10 Tf
+1 0 0 1 54 646 Tm
+(daily bars) Tj
+/F3 10 Tf
+1 0 0 1 54 634 Tm
+(ETF universe) Tj
+/F3 10 Tf
+1 0 0 1 54 622 Tm
+(fixed 5-bar or 10-bar exit) Tj
+/F3 10 Tf
+1 0 0 1 54 610 Tm
+(costs included) Tj
+/F3 10 Tf
+1 0 0 1 54 598 Tm
+(compare to simple breakout baseline) Tj
+/F1 10 Tf
+1 0 0 1 54 586 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 572 Tm
+(Do not add HMMs, macro filters, or change-point detection tomorrow unless the simple state) Tj
+/F1 10 Tf
+1 0 0 1 54 558 Tm
+(and expected value analysis is working.) Tj
+/F1 10 Tf
+1 0 0 1 54 544 Tm
+() Tj
+/F2 12 Tf
+1 0 0 1 54 530 Tm
+(15. Questions To Bring Tomorrow) Tj
+/F1 10 Tf
+1 0 0 1 54 516 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 502 Tm
+(Good questions to ask after reading:) Tj
+/F1 10 Tf
+1 0 0 1 54 488 Tm
+() Tj
+/F3 10 Tf
+1 0 0 1 54 474 Tm
+(Do the current state definitions feel intuitive?) Tj
+/F3 10 Tf
+1 0 0 1 54 462 Tm
+(Should approaching resistance mean within 1 ATR or 1.5 ATR?) Tj
+/F3 10 Tf
+1 0 0 1 54 450 Tm
+(Should failed breakout memory be 3, 5, or 10 bars?) Tj
+/F3 10 Tf
+1 0 0 1 54 438 Tm
+(Should support/resistance use 60, 126, or 252 bars?) Tj
+/F3 10 Tf
+1 0 0 1 54 426 Tm
+(Should state labels be asset-specific or estimated across all ETFs together?) Tj
+/F3 10 Tf
+1 0 0 1 54 414 Tm
+(Should expected value be measured by current state only, or current state plus) Tj
+/F3 10 Tf
+1 0 0 1 54 402 Tm
+(forecast destination?) Tj
+/F3 10 Tf
+1 0 0 1 54 390 Tm
+(What transaction cost assumption should we use first?) Tj
+/F1 10 Tf
+1 0 0 1 54 378 Tm
+() Tj
+/F1 10 Tf
+1 0 0 1 54 364 Tm
+(These choices matter, but we should test them systematically rather than tune them by feel.) Tj
+ET
+endstream
+endobj
+xref
+0 28
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000185 00000 n 
+0000000255 00000 n 
+0000000330 00000 n 
+0000000398 00000 n 
+0000000544 00000 n 
+0000003720 00000 n 
+0000003866 00000 n 
+0000006873 00000 n 
+0000007021 00000 n 
+0000009763 00000 n 
+0000009911 00000 n 
+0000012578 00000 n 
+0000012726 00000 n 
+0000015468 00000 n 
+0000015616 00000 n 
+0000018603 00000 n 
+0000018751 00000 n 
+0000022348 00000 n 
+0000022496 00000 n 
+0000025684 00000 n 
+0000025832 00000 n 
+0000028664 00000 n 
+0000028812 00000 n 
+0000031374 00000 n 
+0000031522 00000 n 
+trailer
+<< /Size 28 /Root 1 0 R >>
+startxref
+33561
+%%EOF
