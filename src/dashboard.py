@@ -213,10 +213,17 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
     .tabs {{ display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }}
     .tab {{ border: 1px solid var(--line); background: var(--surface); border-radius: 7px; padding: 9px 12px; color: var(--muted); cursor: pointer; font-weight: 650; }}
     .tab.active {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
-    .bar-row {{ display: grid; grid-template-columns: 54px minmax(0, 1fr) 86px; gap: 12px; align-items: center; margin: 10px 0; }}
-    .bar-track {{ height: 16px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }}
-    .bar {{ height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); min-width: 2px; }}
-    .neg {{ background: linear-gradient(90deg, #e26d5c, #b42318); }}
+    .chart-wrap {{ width: 100%; overflow-x: auto; }}
+    .chart-svg {{ display: block; width: 100%; min-width: 620px; height: auto; }}
+    .chart-grid {{ stroke: var(--line); stroke-width: 1; }}
+    .zero-axis {{ stroke: #738394; stroke-width: 1.5; }}
+    .chart-bar {{ rx: 3; ry: 3; }}
+    .chart-bar.pos {{ fill: var(--accent); }}
+    .chart-bar.neg {{ fill: #c24135; }}
+    .chart-label {{ fill: var(--text); font-size: 12px; font-weight: 700; }}
+    .chart-value {{ fill: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }}
+    .chart-axis-label {{ fill: var(--muted); font-size: 11px; }}
+    .chart-empty {{ color: var(--muted); background: #fbfcfd; border: 1px dashed var(--line); border-radius: 8px; padding: 22px; text-align: center; }}
     table {{ width: 100%; border-collapse: collapse; font-size: 13px; }}
     th, td {{ border-bottom: 1px solid var(--line); padding: 9px 8px; text-align: right; white-space: nowrap; }}
     th:first-child, td:first-child {{ text-align: left; }}
@@ -387,14 +394,74 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
       document.getElementById("plain-results").innerHTML = items.map(item => `<li>${{esc(item)}}</li>`).join("");
     }}
 
-    function bars(target, rows, valueKey, labelKey, valueFormatter = fmtPct) {{
-      const values = rows.map(row => Number(row[valueKey] ?? 0));
-      const max = Math.max(...values.map(Math.abs), 0.000001);
-      document.getElementById(target).innerHTML = rows.map(row => {{
-        const value = Number(row[valueKey] ?? 0);
-        const width = Math.max(2, Math.abs(value) / max * 100);
-        return `<div class="bar-row"><strong>${{esc(row[labelKey])}}</strong><div class="bar-track"><div class="bar ${{value < 0 ? "neg" : ""}}" style="width:${{width}}%"></div></div><span class="${{value < 0 ? "bad" : "good"}}">${{valueFormatter(value)}}</span></div>`;
+    function svgDivergingBars(target, rows, options) {{
+      const {{
+        valueKey,
+        labelKey,
+        title,
+        valueFormatter = fmtPct,
+        maxRows = 12,
+        emptyText = "No chart rows available."
+      }} = options;
+      const container = document.getElementById(target);
+      const chartRows = rows
+        .map(row => ({{...row, chartValue: Number(row[valueKey])}}))
+        .filter(row => Number.isFinite(row.chartValue))
+        .slice(0, maxRows);
+
+      if (!chartRows.length) {{
+        container.innerHTML = `<div class="chart-empty">${{esc(emptyText)}}</div>`;
+        return;
+      }}
+
+      const width = 760;
+      const left = 132;
+      const right = 88;
+      const top = 32;
+      const rowHeight = 34;
+      const bottom = 26;
+      const barHeight = 16;
+      const plotWidth = width - left - right;
+      const zeroX = left + plotWidth / 2;
+      const maxAbs = Math.max(...chartRows.map(row => Math.abs(row.chartValue)), 0.000001);
+      const height = top + bottom + chartRows.length * rowHeight;
+      const titleId = `${{target}}-title`;
+      const axisY = height - bottom + 6;
+      const truncate = value => {{
+        const text = String(value ?? "n/a");
+        return text.length > 18 ? `${{text.slice(0, 15)}}...` : text;
+      }};
+
+      const bars = chartRows.map((row, index) => {{
+        const value = row.chartValue;
+        const y = top + index * rowHeight + 5;
+        const scaled = Math.max(2, Math.abs(value) / maxAbs * (plotWidth / 2));
+        const x = value < 0 ? zeroX - scaled : zeroX;
+        const label = row[labelKey] ?? "n/a";
+        const formatted = valueFormatter(value);
+        const valueX = value < 0 ? Math.max(left + 8, zeroX - scaled - 7) : Math.min(width - right - 8, zeroX + scaled + 7);
+        const valueAnchor = value < 0 ? "end" : "start";
+        return `
+          <text class="chart-label" x="${{left - 10}}" y="${{y + 12}}" text-anchor="end"><title>${{esc(label)}}</title>${{esc(truncate(label))}}</text>
+          <rect class="chart-bar ${{value < 0 ? "neg" : "pos"}}" x="${{x.toFixed(2)}}" y="${{y}}" width="${{scaled.toFixed(2)}}" height="${{barHeight}}">
+            <title>${{esc(label)}}: ${{esc(formatted)}}</title>
+          </rect>
+          <text class="chart-value" x="${{valueX.toFixed(2)}}" y="${{y + 12}}" text-anchor="${{valueAnchor}}">${{esc(formatted)}}</text>`;
       }}).join("");
+
+      container.innerHTML = `
+        <div class="chart-wrap">
+          <svg class="chart-svg" viewBox="0 0 ${{width}} ${{height}}" role="img" aria-labelledby="${{titleId}}">
+            <title id="${{titleId}}">${{esc(title)}}</title>
+            <line class="chart-grid" x1="${{left}}" x2="${{width - right}}" y1="${{top - 10}}" y2="${{top - 10}}"></line>
+            <line class="zero-axis" x1="${{zeroX}}" x2="${{zeroX}}" y1="${{top - 14}}" y2="${{height - bottom}}"></line>
+            <line class="chart-grid" x1="${{left}}" x2="${{width - right}}" y1="${{height - bottom}}" y2="${{height - bottom}}"></line>
+            ${{bars}}
+            <text class="chart-axis-label" x="${{left}}" y="${{axisY}}" text-anchor="start">-${{esc(valueFormatter(maxAbs))}}</text>
+            <text class="chart-axis-label" x="${{zeroX}}" y="${{axisY}}" text-anchor="middle">0</text>
+            <text class="chart-axis-label" x="${{width - right}}" y="${{axisY}}" text-anchor="end">${{esc(valueFormatter(maxAbs))}}</text>
+          </svg>
+        </div>`;
     }}
 
     function table(target, columns, rows) {{
@@ -405,7 +472,11 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
 
     function renderPerformance() {{
       const rows = [...dashboardData.walkforward].sort((a, b) => Number(b.total_return) - Number(a.total_return));
-      bars("performance-bars", rows, "total_return", "symbol");
+      svgDivergingBars("performance-bars", rows, {{
+        valueKey: "total_return",
+        labelKey: "symbol",
+        title: "Walk-forward performance total return by symbol"
+      }});
       table("risk-table", [
         {{key:"symbol", label:"Symbol"}},
         {{key:"sharpe", label:"Sharpe", format: fmtNum}},
@@ -433,7 +504,12 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
         .sort((a, b) => Math.abs(Number(b.ev_after_cost_5)) - Math.abs(Number(a.ev_after_cost_5)))
         .slice(0, 16)
         .map(row => ({{...row, key: `${{row.symbol}} V${{row.vol_state}} S${{row.state}}`}}));
-      bars("vol-bars", rows.slice(0, 10), "ev_after_cost_5", "key");
+      svgDivergingBars("vol-bars", rows, {{
+        valueKey: "ev_after_cost_5",
+        labelKey: "key",
+        title: "Volatility-conditioned expected value after cost",
+        maxRows: 10
+      }});
       table("vol-table", [
         {{key:"symbol", label:"Symbol"}},
         {{key:"vol_state", label:"Vol"}},

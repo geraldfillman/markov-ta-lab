@@ -186,3 +186,21 @@ def test_embedded_payload_cannot_close_inline_script(tmp_path: Path) -> None:
     assert hostile_error not in html
     assert "\\u003c/script\\u003e" in html
     assert payload["ingestionStatus"]["symbols"][0]["error"] == hostile_error  # type: ignore[index]
+
+
+def test_dashboard_uses_accessible_svg_charts_with_zero_axis_and_empty_state(tmp_path: Path) -> None:
+    tables_dir = tmp_path / "tables"
+    output_dir = tmp_path / "dashboard"
+    _write_dashboard_inputs(tables_dir)
+
+    html = generate_dashboard(tables_dir=tables_dir, output_dir=output_dir).read_text(encoding="utf-8")
+
+    assert "function svgDivergingBars" in html
+    assert '<svg class="chart-svg"' in html
+    assert 'role="img"' in html
+    assert 'aria-labelledby="${titleId}"' in html
+    assert '<title id="${titleId}">${esc(title)}</title>' in html
+    assert 'class="zero-axis"' in html
+    assert "No chart rows available." in html
+    assert "performance-bars" in html
+    assert "vol-bars" in html
