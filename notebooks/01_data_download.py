@@ -75,10 +75,23 @@ def _symbol_status(symbol: str, frame) -> IngestionSymbolStatus:
     )
 
 
+def _missing_symbol_status(symbol: str) -> IngestionSymbolStatus:
+    return IngestionSymbolStatus(
+        symbol=symbol,
+        status="error",
+        rows=0,
+        error=f"No data returned for requested symbol {symbol}",
+    )
+
+
+def _run_status(symbol_statuses: list[IngestionSymbolStatus]) -> str:
+    return "partial" if any(status.status == "error" for status in symbol_statuses) else "success"
+
+
 def _download_data(symbols: list[str], start: str, end: str, provider: str):
     if provider == "yfinance":
         return download_ohlcv(symbols, start, end)
-    return download_ohlcv(symbols, start, end, provider)
+    raise ValueError(f"Unsupported provider: {provider}")
 
 
 def enrich_market_data(frame):
@@ -117,7 +130,10 @@ def main() -> None:
     symbol_statuses: list[IngestionSymbolStatus] = []
     try:
         data = _download_data(symbols, args.start, args.end, args.provider)
-        symbol_statuses = [_symbol_status(symbol, data[symbol]) for symbol in symbols if symbol in data]
+        symbol_statuses = [
+            _symbol_status(symbol, data[symbol]) if symbol in data else _missing_symbol_status(symbol)
+            for symbol in symbols
+        ]
         enriched = {
             symbol: enrich_market_data(frame)
             for symbol, frame in data.items()
@@ -129,7 +145,7 @@ def main() -> None:
         report = missing_data_report(data)
         print(report)
 
-        write_status("success", symbol_statuses, finished_at=_now_iso())
+        write_status(_run_status(symbol_statuses), symbol_statuses, finished_at=_now_iso())
     except Exception as error:
         failed_statuses = [
             IngestionSymbolStatus(symbol=symbol, status="error", rows=0, error=str(error))

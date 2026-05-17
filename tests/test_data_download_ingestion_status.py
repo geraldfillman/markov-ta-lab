@@ -46,7 +46,7 @@ def test_data_download_writes_ingestion_status(monkeypatch, tmp_path: Path) -> N
         module,
         "parse_args",
         lambda: module.argparse.Namespace(
-            provider="fake",
+            provider="yfinance",
             start="2024-01-01",
             end="2024-01-05",
             symbols="SPY,QQQ",
@@ -58,7 +58,7 @@ def test_data_download_writes_ingestion_status(monkeypatch, tmp_path: Path) -> N
     monkeypatch.setattr(
         module,
         "download_ohlcv",
-        lambda symbols, start, end, provider: {symbol: _sample_frame() for symbol in symbols},
+        lambda symbols, start, end: {symbol: _sample_frame() for symbol in symbols},
     )
     monkeypatch.setattr(module, "enrich_market_data", lambda frame: frame.assign(state=0))
 
@@ -66,13 +66,96 @@ def test_data_download_writes_ingestion_status(monkeypatch, tmp_path: Path) -> N
 
     payload = json.loads(status_path.read_text(encoding="utf-8"))
     assert payload["status"] == "success"
-    assert payload["provider"] == "fake"
+    assert payload["provider"] == "yfinance"
     assert [row["symbol"] for row in payload["symbols"]] == ["SPY", "QQQ"]
     assert payload["symbols"][0]["rows"] == 3
     assert payload["symbols"][0]["first_date"] == "2024-01-02"
 
 
 def test_data_download_marks_all_symbols_error_when_enrichment_fails(
+    monkeypatch, tmp_path: Path
+) -> None:
+    module = _load_script_module()
+    status_path = tmp_path / "tables" / "ingestion_status.json"
+    raw_dir = tmp_path / "raw"
+    processed_dir = tmp_path / "processed"
+
+    monkeypatch.setattr(
+        module,
+        "parse_args",
+        lambda: module.argparse.Namespace(
+            provider="yfinance",
+            start="2024-01-01",
+            end="2024-01-05",
+            symbols="SPY,QQQ",
+            status_path=str(status_path),
+            raw_dir=str(raw_dir),
+            processed_dir=str(processed_dir),
+        ),
+    )
+    monkeypatch.setattr(
+        module,
+        "download_ohlcv",
+        lambda symbols, start, end: {symbol: _sample_frame() for symbol in symbols},
+    )
+
+    def fail_enrichment(frame: pd.DataFrame) -> pd.DataFrame:
+        raise RuntimeError("enrichment failed")
+
+    monkeypatch.setattr(module, "enrich_market_data", fail_enrichment)
+
+    with pytest.raises(RuntimeError, match="enrichment failed"):
+        module.main()
+
+    payload = json.loads(status_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "failed"
+    assert [row["symbol"] for row in payload["symbols"]] == ["SPY", "QQQ"]
+    assert all(row["status"] == "error" for row in payload["symbols"])
+    assert all("enrichment failed" in row["error"] for row in payload["symbols"])
+
+
+def test_data_download_marks_missing_requested_symbol_partial(
+    monkeypatch, tmp_path: Path
+) -> None:
+    module = _load_script_module()
+    status_path = tmp_path / "tables" / "ingestion_status.json"
+    raw_dir = tmp_path / "raw"
+    processed_dir = tmp_path / "processed"
+
+    monkeypatch.setattr(
+        module,
+        "parse_args",
+        lambda: module.argparse.Namespace(
+            provider="yfinance",
+            start="2024-01-01",
+            end="2024-01-05",
+            symbols="SPY,QQQ",
+            status_path=str(status_path),
+            raw_dir=str(raw_dir),
+            processed_dir=str(processed_dir),
+        ),
+    )
+    monkeypatch.setattr(
+        module,
+        "download_ohlcv",
+        lambda symbols, start, end: {"SPY": _sample_frame()},
+    )
+    monkeypatch.setattr(module, "enrich_market_data", lambda frame: frame.assign(state=0))
+
+    module.main()
+
+    payload = json.loads(status_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "partial"
+    assert [row["symbol"] for row in payload["symbols"]] == ["SPY", "QQQ"]
+    assert payload["symbols"][0]["status"] == "success"
+    assert payload["symbols"][0]["rows"] == 3
+    assert payload["symbols"][0]["first_date"] == "2024-01-02"
+    assert payload["symbols"][1]["status"] == "error"
+    assert payload["symbols"][1]["rows"] == 0
+    assert "No data returned for requested symbol QQQ" == payload["symbols"][1]["error"]
+
+
+def test_data_download_rejects_unsupported_provider_before_download(
     monkeypatch, tmp_path: Path
 ) -> None:
     module = _load_script_module()
@@ -93,22 +176,16 @@ def test_data_download_marks_all_symbols_error_when_enrichment_fails(
             processed_dir=str(processed_dir),
         ),
     )
-    monkeypatch.setattr(
-        module,
-        "download_ohlcv",
-        lambda symbols, start, end, provider: {symbol: _sample_frame() for symbol in symbols},
-    )
 
-    def fail_enrichment(frame: pd.DataFrame) -> pd.DataFrame:
-        raise RuntimeError("enrichment failed")
+    def fail_if_called(symbols, start, end):
+        raise AssertionError("download should not be called")
 
-    monkeypatch.setattr(module, "enrich_market_data", fail_enrichment)
+    monkeypatch.setattr(module, "download_ohlcv", fail_if_called)
 
-    with pytest.raises(RuntimeError, match="enrichment failed"):
+    with pytest.raises(ValueError, match="Unsupported provider: fake"):
         module.main()
 
     payload = json.loads(status_path.read_text(encoding="utf-8"))
     assert payload["status"] == "failed"
-    assert [row["symbol"] for row in payload["symbols"]] == ["SPY", "QQQ"]
     assert all(row["status"] == "error" for row in payload["symbols"])
-    assert all("enrichment failed" in row["error"] for row in payload["symbols"])
+    assert all("Unsupported provider: fake" in row["error"] for row in payload["symbols"])
