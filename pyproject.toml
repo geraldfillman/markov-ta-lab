@@ -1,4 +1,87 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "markov-ta-lab"
+version = "0.1.0"
+description = "Markov + Technical Analysis research lab — state-conditioned EV, walk-forward backtests, paper-trading tracker."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Gerald Fillman" }]
+keywords = ["markov", "quant", "research", "backtesting", "technical-analysis", "paper-trading"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = [
+    "numpy>=1.26,<3.0",
+    "pandas>=2.2,<3.0",
+    "pyarrow>=15.0",
+    "scipy>=1.12",
+    "scikit-learn>=1.4",
+    "yfinance>=0.2.40",
+]
+
+[project.optional-dependencies]
+hmm = ["hmmlearn>=0.3.2"]
+changepoint = ["ruptures>=1.1.9"]
+garch = ["arch>=6.3"]
+kalman = ["pykalman>=0.9.7", "filterpy>=1.4.5"]
+ta = ["ta>=0.11", "statsmodels>=0.14"]
+backtest = ["vectorbt>=0.26", "backtesting>=0.3.3"]
+viz = ["matplotlib>=3.8", "plotly>=5.20"]
+notebook = ["jupyterlab>=4.1", "ipykernel>=6.29"]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "hypothesis>=6.100",
+    "build>=1.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/geraldfillman/markov-ta-lab"
+Repository = "https://github.com/geraldfillman/markov-ta-lab"
+Issues = "https://github.com/geraldfillman/markov-ta-lab/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/",
+    "scripts/",
+    "notebooks/",
+    "tests/",
+    "docs/",
+    "README.md",
+    "AGENTS.md",
+    "requirements.txt",
+    "environment.yml",
+    "pyproject.toml",
+]
+exclude = [
+    "data/raw/*",
+    "data/processed/*",
+    "reports/dashboard/*",
+    ".pytest_tmp/",
+    ".test_output/",
+    ".venv/",
+]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
-addopts = "-ra -p no:cacheprovider"
+# Pin tmp_path to a project-local dir. The default system temp path is locked
+# down on some Windows accounts and triggers PermissionError on every tmp_path
+# fixture. The directory below is gitignored.
+addopts = "-ra -p no:cacheprovider --basetemp=.test_output/pytest-tmp"
+
+[tool.pyrefly]
+search-path = ["."]
