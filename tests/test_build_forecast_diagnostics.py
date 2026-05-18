@@ -195,15 +195,17 @@ def test_load_real_history_returns_none_for_missing_symbol(fake_data_dir: Path) 
     assert result is None
 
 
-def test_load_real_history_modifiers_are_none(fake_data_dir: Path) -> None:
-    """Modifier slots must be None (only base_state is populated)."""
+def test_load_real_history_populates_calendar_only(fake_data_dir: Path) -> None:
+    """Only base_state and calendar_state are populated; other modifiers stay None."""
+    from src.calendar_states import CALENDAR_STATES
+
     records = _load_real_history("SPY", fake_data_dir)
     assert records is not None
     for record in records:
         assert record.volatility_state is None
         assert record.macro_state is None
-        assert record.calendar_state is None
         assert record.liquidity_state is None
+        assert record.calendar_state in CALENDAR_STATES
 
 
 def test_run_with_real_data_dir_uses_discovered_symbols(
