@@ -29,3 +29,6 @@ data/processed/*.parquet
 # OS
 .DS_Store
 Thumbs.db
+
+# Generated outputs
+reports/dashboard/

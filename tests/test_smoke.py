@@ -6,6 +6,7 @@ import pytest
 MODULES = [
     "src.config",
     "src.data",
+    "src.fmp",
     "src.indicators",
     "src.levels",
     "src.states",
@@ -17,6 +18,8 @@ MODULES = [
     "src.metrics",
     "src.plotting",
     "src.reports",
+    "src.macro",
+    "src.source_quality",
 ]
 
 

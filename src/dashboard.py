@@ -41,6 +41,13 @@ def _load_dashboard_data(tables_dir: Path, ingestion_status_path: str | Path | N
         Path(ingestion_status_path) if ingestion_status_path is not None else tables_dir / "ingestion_status.json"
     )
 
+    # Phase F – forecast diagnostic panels (optional: absent if runner not yet run)
+    fallback_usage = _read_optional_csv(tables_dir / "fallback_usage.csv")
+    confidence_dist = _read_optional_csv(tables_dir / "confidence_distribution.csv")
+    top_rare_states = _read_optional_csv(tables_dir / "top_rare_states.csv")
+    coverage_by_symbol = _read_optional_csv(tables_dir / "coverage_by_symbol.csv")
+    forecast_warnings = _read_optional_csv(tables_dir / "forecast_warnings.csv")
+
     return {
         "walkforward": _records(walkforward),
         "baselines": _records(baselines),
@@ -55,6 +62,12 @@ def _load_dashboard_data(tables_dir: Path, ingestion_status_path: str | Path | N
         "ingestionError": ingestion_error,
         "ingestionMessage": ingestion_message,
         "summary": _summary(walkforward, baselines, clusters),
+        # Phase F panels
+        "fallbackUsage": _records(fallback_usage),
+        "confidenceDist": _records(confidence_dist),
+        "topRareStates": _records(top_rare_states),
+        "coverageBySymbol": _records(coverage_by_symbol),
+        "forecastWarnings": _records(forecast_warnings),
         "sources": {
             "walkforward": "walkforward_backtest_summary.csv",
             "baselines": "walkforward_baseline_comparison.csv",
@@ -66,6 +79,11 @@ def _load_dashboard_data(tables_dir: Path, ingestion_status_path: str | Path | N
             "stability": "sensitivity_stability_summary.csv",
             "sharpeCi": "walkforward_sharpe_ci.csv",
             "ingestionStatus": "ingestion_status.json",
+            "fallbackUsage": "fallback_usage.csv",
+            "confidenceDist": "confidence_distribution.csv",
+            "topRareStates": "top_rare_states.csv",
+            "coverageBySymbol": "coverage_by_symbol.csv",
+            "forecastWarnings": "forecast_warnings.csv",
         },
     }
 
@@ -289,6 +307,7 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
       <button class="tab" data-panel="clusters">Clusters</button>
       <button class="tab" data-panel="ingestion">Ingestion</button>
       <button class="tab" data-panel="research">Research QA</button>
+      <button class="tab" data-panel="forecast-diag">Forecast Diagnostics</button>
     </nav>
     <section id="performance" class="panel grid two">
       <div class="card">
@@ -356,6 +375,37 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
         <h2>Block-Bootstrap Sharpe CI</h2>
         <p class="note">Block size = trade horizon; non-overlapping trades preserved.</p>
         <div class="table-wrap"><table id="sharpe-ci-table"></table></div>
+      </div>
+    </section>
+    <section id="forecast-diag" class="panel" hidden>
+      <div class="grid two" style="margin-bottom:16px;">
+        <div class="card">
+          <h2>Fallback Level Usage</h2>
+          <p style="color:var(--muted);font-size:13px;">How often the conditional Markov model fell back to a lower-specificity key. Level 0 = base-only (maximum fallback).</p>
+          <div id="fallback-bars"></div>
+        </div>
+        <div class="card">
+          <h2>Confidence Distribution</h2>
+          <p style="color:var(--muted);font-size:13px;">Fraction of forecasts in each confidence tier (high &ge;50, medium &ge;30, low &lt;30 sample transitions).</p>
+          <div id="confidence-bars"></div>
+        </div>
+      </div>
+      <div class="grid two" style="margin-bottom:16px;">
+        <div class="card">
+          <h2>Top Rare States</h2>
+          <p style="color:var(--muted);font-size:13px;">Composite keys with the fewest historical samples — most likely to trigger fallback or low-confidence warnings.</p>
+          <div class="table-wrap"><table id="rare-states-table"></table></div>
+        </div>
+        <div class="card">
+          <h2>Coverage by Symbol</h2>
+          <p style="color:var(--muted);font-size:13px;">Per-symbol forecast quality: sample depth and low-confidence rate.</p>
+          <div class="table-wrap"><table id="coverage-symbol-table"></table></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <h2>Forecast Warnings Summary</h2>
+        <p style="color:var(--muted);font-size:13px;">Aggregated warning types emitted by the conditional Markov engine across all forecasts.</p>
+        <div class="table-wrap"><table id="warnings-table"></table></div>
       </div>
     </section>
     <section class="card" style="margin-top:16px;">
@@ -647,6 +697,47 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
       ], sharpeCi);
     }}
 
+    function renderForecastDiag() {{
+      // Fallback usage bar chart
+      const fallback = [...(dashboardData.fallbackUsage || [])].sort((a, b) => Number(a.fallback_level) - Number(b.fallback_level));
+      const maxFb = Math.max(...fallback.map(r => Number(r.share)), 0.000001);
+      document.getElementById("fallback-bars").innerHTML = fallback.map(r => {{
+        const width = Math.max(2, Number(r.share) / maxFb * 100);
+        return `<div class="bar-row"><strong>L${{esc(r.fallback_level)}}</strong><div class="bar-track"><div class="bar" style="width:${{width}}%"></div></div><span>${{fmtPct(r.share)}} (${{r.count}})</span></div>`;
+      }}).join("") || "<p style='color:var(--muted)'>No data — run build_forecast_diagnostics.py first.</p>";
+
+      // Confidence distribution bar chart
+      const conf = [...(dashboardData.confidenceDist || [])];
+      const maxConf = Math.max(...conf.map(r => Number(r.share)), 0.000001);
+      const confColor = {{"high": "var(--good)", "medium": "var(--warn)", "low": "var(--bad)"}};
+      document.getElementById("confidence-bars").innerHTML = conf.map(r => {{
+        const width = Math.max(2, Number(r.share) / maxConf * 100);
+        const color = confColor[r.confidence] || "var(--accent)";
+        return `<div class="bar-row"><strong style="color:${{color}}">${{esc(r.confidence)}}</strong><div class="bar-track"><div class="bar" style="width:${{width}}%;background:${{color}}"></div></div><span>${{fmtPct(r.share)}} (${{r.count}})</span></div>`;
+      }}).join("") || "<p style='color:var(--muted)'>No data — run build_forecast_diagnostics.py first.</p>";
+
+      // Rare states table
+      table("rare-states-table", [
+        {{key:"composite_key", label:"Composite Key"}},
+        {{key:"sample_count", label:"Sample Count"}}
+      ], (dashboardData.topRareStates || []).slice(0, 20));
+
+      // Coverage by symbol table
+      table("coverage-symbol-table", [
+        {{key:"symbol", label:"Symbol"}},
+        {{key:"forecast_count", label:"Forecasts"}},
+        {{key:"mean_sample_count", label:"Avg Samples", format: fmtNum}},
+        {{key:"low_confidence_count", label:"Low Conf #"}},
+        {{key:"low_confidence_share", label:"Low Conf %", format: fmtPct}}
+      ], (dashboardData.coverageBySymbol || []));
+
+      // Warnings table
+      table("warnings-table", [
+        {{key:"warning", label:"Warning Type"}},
+        {{key:"count", label:"Count"}}
+      ], (dashboardData.forecastWarnings || []));
+    }}
+
     document.querySelectorAll(".tab").forEach(button => {{
       button.addEventListener("click", () => {{
         document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
@@ -665,6 +756,7 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
     renderClusters();
     renderIngestion();
     renderResearchQA();
+    renderForecastDiag();
   </script>
 </body>
 </html>

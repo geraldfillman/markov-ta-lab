@@ -13,7 +13,7 @@ FIRST_EXPERIMENT_SYMBOLS = [
 
 # ─── Data parameters ───────────────────────────────────────────────────
 DEFAULT_START = "2010-01-01"
-DEFAULT_END = "2025-12-31"
+DEFAULT_END = "2026-05-16"
 
 RAW_DATA_DIR = "data/raw"
 PROCESSED_DATA_DIR = "data/processed"

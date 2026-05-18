@@ -3,9 +3,11 @@
 Run from the repository root:
 
     python notebooks/01_data_download.py
+    python notebooks/01_data_download.py --provider fmp
 """
 
 import argparse
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -34,10 +36,19 @@ DEFAULT_STATUS_PATH = Path(TABLES_DIR) / "ingestion_status.json"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--provider", default="yfinance")
-    parser.add_argument("--start", default=DEFAULT_START)
-    parser.add_argument("--end", default=DEFAULT_END)
-    parser.add_argument("--symbols", default=",".join(FIRST_EXPERIMENT_SYMBOLS))
+    parser.add_argument(
+        "--provider",
+        choices=["yfinance", "fmp"],
+        default=os.getenv("MARKOV_DATA_PROVIDER", "yfinance"),
+        help="Market data provider. Defaults to MARKOV_DATA_PROVIDER or yfinance.",
+    )
+    parser.add_argument("--start", default=DEFAULT_START, help="Inclusive start date.")
+    parser.add_argument("--end", default=DEFAULT_END, help="Exclusive/end date convention depends on provider.")
+    parser.add_argument(
+        "--symbols",
+        default=",".join(FIRST_EXPERIMENT_SYMBOLS),
+        help="Comma-separated symbols to download.",
+    )
     parser.add_argument("--raw-dir", default=RAW_DATA_DIR)
     parser.add_argument("--processed-dir", default=PROCESSED_DATA_DIR)
     parser.add_argument("--status-path", default=str(DEFAULT_STATUS_PATH))

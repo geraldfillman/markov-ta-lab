@@ -14,6 +14,8 @@ Report template sections:
 """
 
 from datetime import date
+from pathlib import Path
+import re
 
 
 REPORT_TEMPLATE = """\
@@ -92,4 +94,30 @@ def generate_report(
     str
         Path to the saved report file.
     """
-    raise NotImplementedError("Implement in Reporting Agent phase")
+    defaults = {
+        "question": "Not evaluated in this run.",
+        "hypothesis": "Not evaluated in this run.",
+        "data_description": "Not evaluated in this run.",
+        "state_definitions": "Not evaluated in this run.",
+        "model_setup": "Not evaluated in this run.",
+        "backtest_rules": "Not evaluated in this run.",
+        "results": "Not evaluated in this run.",
+        "benchmark_comparison": "Not evaluated in this run.",
+        "what_worked": "Not evaluated in this run.",
+        "what_failed": "Not evaluated in this run.",
+        "bias_risk_checks": "Not evaluated in this run.",
+        "next_experiment": "Not evaluated in this run.",
+    }
+    content = defaults | sections
+    slug = re.sub(r"[^A-Za-z0-9_-]+", "-", name.strip()).strip("-").lower()
+    if not slug:
+        raise ValueError("name must contain at least one filename-safe character")
+
+    directory = Path(output_dir)
+    directory.mkdir(parents=True, exist_ok=True)
+    output_path = directory / f"{slug}.md"
+    output_path.write_text(
+        REPORT_TEMPLATE.format(name=name, date=date.today().isoformat(), **content),
+        encoding="utf-8",
+    )
+    return str(output_path)
