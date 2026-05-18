@@ -71,6 +71,7 @@ def _load_real_history(symbol: str, data_dir: Path) -> list[StateRecord] | None:
     caller can fall back to synthetic data without crashing.
     """
     try:
+        from src.calendar_states import classify_calendar
         from src.data import load_processed
         from src.indicators import add_indicators
         from src.levels import detect_levels
@@ -87,8 +88,11 @@ def _load_real_history(symbol: str, data_dir: Path) -> list[StateRecord] | None:
             return None
 
         records = [
-            StateRecord(base_state=STATE_LABELS[sid])
-            for sid in valid_ids
+            StateRecord(
+                base_state=STATE_LABELS[sid],
+                calendar_state=classify_calendar(date),
+            )
+            for date, sid in valid_ids.items()
             if sid in STATE_LABELS
         ]
         if not records:
