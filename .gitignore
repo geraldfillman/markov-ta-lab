@@ -16,6 +16,7 @@ build/
 .env
 *.env
 .venv/
+.worktrees/
 
 # Data (large files - keep .gitkeep only)
 data/raw/*.csv
@@ -28,3 +29,6 @@ data/processed/*.parquet
 # OS
 .DS_Store
 Thumbs.db
+
+# Generated outputs
+reports/dashboard/

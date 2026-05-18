@@ -7,6 +7,10 @@ Provides chart helpers for:
 - Level visualisation
 - Regime overlays
 - Parameter sensitivity surfaces
+
+Known unimplemented surface:
+    The plot_* helpers are placeholders. The current reporting contract is
+    the static HTML dashboard in src.dashboard.
 """
 
 import pandas as pd

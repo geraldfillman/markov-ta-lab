@@ -3,6 +3,7 @@
 from uuid import uuid4
 
 import pandas as pd
+import pytest
 
 from src.data import (
     download_ohlcv,
@@ -57,6 +58,25 @@ def test_download_ohlcv_drops_rows_missing_required_ohlcv_values():
 
     assert len(result["SPY"]) == 2
     assert result["SPY"]["Close"].isna().sum() == 0
+
+
+def test_download_ohlcv_accepts_fmp_provider(monkeypatch):
+    def fmp_downloader(symbol: str, start: str, end: str) -> pd.DataFrame:
+        assert symbol == "SPY"
+        assert start == "2024-01-01"
+        assert end == "2024-01-05"
+        return _sample_vendor_frame()
+
+    monkeypatch.setattr("src.data._download_with_fmp", fmp_downloader)
+
+    result = download_ohlcv("SPY", "2024-01-01", "2024-01-05", provider="fmp")
+
+    assert list(result["SPY"].columns) == ["Open", "High", "Low", "Close", "Volume"]
+
+
+def test_download_ohlcv_rejects_unknown_provider():
+    with pytest.raises(ValueError, match="Unsupported OHLCV provider"):
+        download_ohlcv("SPY", "2024-01-01", "2024-01-05", provider="unknown")
 
 
 def test_missing_data_report_counts_missing_values_by_symbol():

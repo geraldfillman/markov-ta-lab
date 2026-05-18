@@ -17,9 +17,12 @@ def estimate_transition_matrix(
     values = states.dropna().astype(int).to_numpy()
     counts = np.full((n_states, n_states), alpha, dtype=float)
 
-    for current_state, next_state in zip(values[:-1], values[1:]):
-        if 0 <= current_state < n_states and 0 <= next_state < n_states:
-            counts[current_state, next_state] += 1.0
+    if values.size >= 2:
+        src = values[:-1]
+        dst = values[1:]
+        valid = (src >= 0) & (src < n_states) & (dst >= 0) & (dst < n_states)
+        if valid.any():
+            np.add.at(counts, (src[valid], dst[valid]), 1.0)
 
     row_sums = counts.sum(axis=1, keepdims=True)
     matrix = np.divide(

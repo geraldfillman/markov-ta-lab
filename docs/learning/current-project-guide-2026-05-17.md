@@ -1,8 +1,10 @@
 # Markov TA Lab Current Project Guide
 
-Date: 2026-05-17
+Date: 2026-05-17 (last refreshed after Phase D landed)
 
-This guide explains how to use the project in its current state, what has already been built, what each script and module does, and where the project is going next. It is written as a learning document, not just a command checklist, so it includes the reasoning behind the pieces.
+This guide explains how to use the project in its current state, what has been built, which commands to run, and how to interpret the generated research artifacts.
+
+The project has progressed from a research prototype into a complete research lab with robustness checks, a macro Sharpe-lift gate, a paper-trading tracker, and a hatchling-built distribution with GitHub Actions CI. All five planned phases (A–E) are shipped. Open questions are now research questions, not engineering ones.
 
 ## 1. Project Goal
 
@@ -11,25 +13,35 @@ The Markov TA Lab is a Python research workspace for asking one central question
 ```text
 When price interacts with support, resistance, or trend structure,
 what is the probability of each next market state,
-and does that probability create positive expected value after costs?
+and does that probability create positive expected value after costs,
+given the current macro and volatility regime?
 ```
 
-The project is not a trading bot. It is not connected to a broker. It does not place trades. The goal is to build a repeatable research loop:
+The project is not a trading bot. It is not connected to a broker. It does not place trades. It is a research lab for market state modeling, transition analysis, expected value estimation, regime-aware backtesting, and *drift-monitored paper trading*.
+
+The current research loop is:
 
 ```text
-download data
+download data (yfinance OR Financial Modeling Prep)
 clean data
 compute indicators
 detect support/resistance zones
 label market states
 estimate transition probabilities
-forecast future states
-measure expected value
-compare against baselines
-only then consider backtesting rules
+measure state expected value
+run prototype + walk-forward backtests
+compare against baselines (incl. random-label permutation)
+condition results by volatility regime
+cluster assets by structural behavior
+pool sparse states by cluster
+estimate Markov probability weighted EV
+run parameter sensitivity grids + stability summary
+attach bootstrap Sharpe CIs to reports
+classify macro regimes and enforce Sharpe-lift gate
+monitor state-distribution drift (KL divergence)
+advance the stateful paper-trading tracker (no execution)
+produce repeatable tables, reports, and a static HTML dashboard
 ```
-
-The current project is through the visible Markov model phase. Expected value and backtesting come next.
 
 ## 2. Repository Location
 
@@ -62,53 +74,143 @@ python -m pytest -q
 Current expected result:
 
 ```text
-38 passed, 3 skipped
+140 passed, 3 skipped
 ```
 
-The skipped tests are expected. They belong to the future Backtest Agent phase.
+The three skipped tests are gated on optional libraries:
 
-The tests currently verify:
+```text
+ruptures   (change-point detection)
+hmmlearn   (HMM regimes)
+hypothesis (property-based tests)
+```
+
+Install any of those and the corresponding test files start running. The core 140 tests cover:
 
 ```text
 project setup
-CLI/script ergonomics
-data cleaning and IO
+CLI / script ergonomics
+data cleaning and IO (yfinance + FMP)
+FMP client + .env key handling
 technical indicators
 support/resistance levels
 state labeling
-Markov transition/forecast utilities
+Markov transition + forecast utilities
+expected value metrics
+state expectancy confidence intervals
+sensitivity stability summary
+block-bootstrap Sharpe CIs
+report generation
+readable + walk-forward backtests
+random-label permutation baseline
+signal-mask gating (used by macro + drift filters)
+baseline comparisons
+volatility regime classification
+asset behavior clustering
+cluster-pooled state expectancy
+Markov probability weighted EV
+walk-forward sensitivity grids
+macro regime classification + Sharpe-lift gate
+KL-divergence drift monitor
+immutable PositionTracker (open/close/persist round-trip)
+paper-trading orchestrator (gates + horizon-close behaviour)
 module import smoke tests
 ```
 
 ## 4. Environment Notes
 
-The project was designed for Python 3.11, but the current code built so far can run under your existing Python environment too.
+The project was designed for Python 3.11 and runs cleanly in a local `.venv` on this machine.
 
-You created a `.venv/` directory locally. That folder is ignored by git. It should never be committed.
+`.venv/` is ignored by git and should not be committed.
 
-If you use PowerShell to activate a venv, use:
+PowerShell activation:
 
 ```powershell
 & ".\.venv\Scripts\Activate.ps1"
 ```
 
-The `&` matters in PowerShell. It tells PowerShell to run the script path.
+The `&` matters — it tells PowerShell to run the script path.
 
-If package installs fail on Python 3.14, that is mostly because some later research packages, such as `hmmlearn` and `ruptures`, may need prebuilt wheels or Microsoft C++ Build Tools. Those packages are not needed for the current passing tests.
+If package installs fail on newer Python versions, it is usually because optional research packages (`hmmlearn`, `ruptures`, `arch`) need compatible wheels or Microsoft C++ Build Tools. The core 140 passing tests do not require those.
 
-## 5. Main Script
+## 5. Experiment Universes
 
-The main runnable project script right now is:
+Two universes are defined in `src/config.py`:
+
+```text
+FIRST_EXPERIMENT_SYMBOLS  (9 tickers, default everywhere)
+  SPY QQQ IWM XLK SMH XLE XLF GLD TLT
+
+DEFAULT_SYMBOLS  (15 tickers, opt-in via --full-universe)
+  SPY QQQ IWM DIA XLK SMH XLE XLF XLI XLU XLV GLD SLV TLT UUP
+```
+
+Most scripts default to `FIRST_EXPERIMENT_SYMBOLS`. Add `--full-universe` to switch to the 15-ticker set.
+
+## 6. One-Command Workflows
+
+### 6.1 Core research pipeline
+
+If processed data already exists, run the canonical research workflow in this order:
+
+```powershell
+python scripts\build_state_expectancy_table.py
+python scripts\run_narrow_backtest.py
+python scripts\build_vol_conditioned_expectancy.py
+python scripts\run_walkforward_backtest.py
+python scripts\build_asset_clusters.py
+python scripts\build_cluster_pooled_expectancy.py
+python scripts\build_markov_weighted_ev.py
+python scripts\run_sensitivity_tests.py
+python scripts\run_sensitivity_stability.py
+python scripts\run_sharpe_bootstrap_ci.py
+python scripts\run_random_label_baseline.py
+python scripts\build_dashboard.py
+python -m pytest -q
+```
+
+If processed data does not yet exist:
 
 ```powershell
 python notebooks\01_data_download.py
 ```
 
-Even though it lives in the `notebooks/` folder, it is currently a normal Python script. It is not a `.ipynb` notebook yet.
+### 6.2 Cross-provider research (FMP vs. yfinance)
 
-When you run it, it:
+```powershell
+python scripts\run_walkforward_backtest.py --provider yfinance
+python scripts\run_walkforward_backtest.py --provider fmp
+python scripts\run_provider_comparison.py --providers yfinance fmp
+```
 
-1. Downloads OHLCV data from yfinance.
+Produces `reports/tables/provider_comparison.csv` with `<metric>__delta_<other>_minus_<base>` columns.
+
+### 6.3 Daily paper-trading job
+
+```powershell
+python scripts\run_drift_monitor.py --provider fmp
+python scripts\run_paper_trading_daily.py --provider fmp
+```
+
+Tracker lives at `reports/paper_trading/tracker.json` (atomic write). Decisions append to `reports/tables/paper_trading_decisions.csv`. Drift alerts gate new entries.
+
+## 7. Data Pipeline
+
+Main data script:
+
+```powershell
+python notebooks\01_data_download.py
+```
+
+Optional FMP provider:
+
+```powershell
+python notebooks\01_data_download.py --provider fmp
+```
+
+Pipeline steps:
+
+1. Downloads OHLCV from yfinance (default) or FMP (`--provider fmp`).
 2. Saves raw CSV files.
 3. Adds technical indicators.
 4. Adds support/resistance features.
@@ -116,345 +218,566 @@ When you run it, it:
 6. Saves enriched parquet files.
 7. Prints a missing-data report.
 
-The first experiment universe is:
-
-```text
-SPY
-QQQ
-IWM
-XLK
-SMH
-XLE
-XLF
-GLD
-TLT
-```
-
-Raw files are saved here:
+Outputs:
 
 ```text
 data/raw/*.csv
+data/processed/*.parquet           (legacy path; also where load_processed falls back)
+data/processed/<provider>/*.parquet (when you split snapshots per provider)
 ```
 
-Processed files are saved here:
-
-```text
-data/processed/*.parquet
-```
+`load_processed(symbol, provider="fmp")` first checks `data/processed/fmp/SYMBOL.parquet`, then falls back to the legacy `data/processed/SYMBOL.parquet`.
 
 Both raw and processed generated data files are ignored by git.
 
-## 6. What yfinance Provides
+`DEFAULT_END` is currently `2026-05-16`. yfinance treats the end date as exclusive, so the standard saved processed data includes the close through `2026-05-15`.
 
-yfinance provides the raw market candles:
-
-```text
-Date
-Open
-High
-Low
-Close
-Volume
-```
-
-This is enough for the first research system. The project computes the technical features itself. yfinance does not give us Markov states, support/resistance zones, ATR distances, expected value, or transition probabilities. Those are derived from the OHLCV data.
-
-## 7. Current Pipeline Flow
-
-The pipeline currently flows like this:
+## 8. Pipeline Flow
 
 ```text
-yfinance
-  -> src.data.download_ohlcv
+yfinance OR Financial Modeling Prep
+  -> src.data.download_ohlcv  (provider-agnostic)
   -> src.indicators.add_indicators
   -> src.levels.detect_levels
   -> src.states.label_states
   -> data/processed/*.parquet
-  -> src.markov can estimate probabilities from the state column
+
+  -> src.metrics.state_expectancy_table
+       -> reports/tables/state_expectancy.csv
+  -> src.backtests.run_backtest_readable
+       -> reports/tables/narrow_backtest_summary.csv
+  -> src.backtests.run_walkforward_ev_backtest
+       -> reports/tables/walkforward_backtest_summary[_<provider>].csv
+  -> src.volatility.classify_vol_state
+       -> reports/tables/vol_conditioned_state_expectancy.csv
+  -> src.clustering.cluster_assets
+       -> reports/tables/asset_behavior_clusters.csv
+  -> src.metrics.cluster_pooled_state_expectancy_table
+       -> reports/tables/cluster_pooled_state_expectancy.csv
+  -> src.metrics.walkforward_markov_expected_value
+       -> reports/tables/markov_weighted_ev.csv
+  -> src.backtests.run_walkforward_sensitivity
+       -> reports/tables/walkforward_sensitivity.csv
+  -> src.metrics.sensitivity_stability_summary
+       -> reports/tables/sensitivity_stability_summary.csv
+  -> src.metrics.bootstrap_sharpe_ci_from_trades
+       -> reports/tables/walkforward_sharpe_ci.csv
+  -> src.backtests.baseline_random_label_walkforward
+       -> reports/tables/random_label_baseline.csv
+       -> reports/tables/baseline_comparison.csv (merged)
+  -> src.macro.evaluate_macro_filter_sharpe_lift
+       -> Sharpe-lift gate (>= 0.20 net-of-cost)
+  -> src.drift.drift_alert
+       -> reports/tables/drift_status.csv
+  -> src.paper_trading.paper_trading_step
+       -> reports/paper_trading/tracker.json
+       -> reports/tables/paper_trading_decisions.csv
+  -> src.dashboard.generate_dashboard
+       -> reports/dashboard/index.html
 ```
 
-The Markov functions are implemented as library functions. They are not yet wired into the main data download script.
+## 9. Generated Outputs
 
-## 8. Module-by-Module Guide
-
-### 8.1 `src/data.py`
-
-Purpose:
+Research tables in `reports/tables/`:
 
 ```text
-Download, normalize, save, load, and report on OHLCV data.
+state_expectancy.csv
+narrow_backtest_summary.csv
+baseline_comparison.csv                       (merged with random_label rows)
+vol_conditioned_state_expectancy.csv
+walkforward_backtest_summary.csv
+walkforward_backtest_summary_<provider>.csv   (per-provider variant)
+walkforward_baseline_comparison.csv
+walkforward_baseline_comparison_<provider>.csv
+asset_behavior_clusters.csv
+cluster_pooled_state_expectancy.csv
+markov_weighted_ev.csv
+walkforward_sensitivity.csv
+sensitivity_stability_summary.csv             (Phase B)
+walkforward_sharpe_ci.csv                     (Phase B)
+random_label_baseline.csv                     (Phase B)
+provider_comparison.csv                       (Phase B / D)
+fmp_vs_yfinance_source_quality.csv
+fmp_vs_yfinance_source_summary.csv
+drift_status.csv                              (Phase D)
+paper_trading_decisions.csv                   (Phase D)
 ```
 
-Important functions:
+Persisted paper-trading state:
+
+```text
+reports/paper_trading/tracker.json            (atomic write, schema_version=1)
+```
+
+Human-readable experiment reports:
+
+```text
+reports/runs/*.md
+```
+
+Static dashboard:
+
+```text
+reports/dashboard/index.html
+```
+
+## 10. Module-by-Module Guide
+
+### 10.1 `src/data.py`
+
+Provider-agnostic OHLCV download/clean/load. Key functions:
 
 ```python
-download_ohlcv(symbols, start, end)
+download_ohlcv(symbols, start, end, provider="yfinance")
+load_processed(symbol, data_dir="data/processed", provider=None)
 save_raw(data)
 save_processed(data)
-load_processed(symbol)
 missing_data_report(data)
 ```
 
-The Data Agent normalizes downloaded data into:
+### 10.2 `src/fmp.py`
 
-```text
-Open
-High
-Low
-Close
-Volume
-```
-
-It sorts dates, drops rows missing required OHLCV values, saves raw CSV files, and saves processed parquet files.
-
-### 8.2 `src/indicators.py`
-
-Purpose:
-
-```text
-Compute technical indicators from OHLCV data.
-```
-
-Currently computed:
-
-```text
-sma_20
-sma_50
-sma_200
-ema_20
-atr_14
-rsi_14
-bb_width_20
-return_1d
-return_5d
-return_10d
-realized_vol_20
-volume_zscore_20
-dist_to_sma_20
-dist_to_sma_50
-dist_to_sma_200
-```
-
-Important idea:
-
-```text
-All indicators are aligned to the current timestamp and use current or prior data only.
-```
-
-No indicator should use tomorrow's price to describe today's setup.
-
-### 8.3 `src/levels.py`
-
-Purpose:
-
-```text
-Compute support and resistance zones using only prior data.
-```
-
-Current simple model:
-
-```text
-nearest_resistance = prior rolling high
-nearest_support = prior rolling low
-```
-
-The important guardrail is `.shift(1)`. That means today's high or low cannot become today's support/resistance.
-
-Currently computed:
-
-```text
-nearest_support
-nearest_resistance
-support_zone_low
-support_zone_high
-resistance_zone_low
-resistance_zone_high
-dist_to_support_atr
-dist_to_resistance_atr
-```
-
-Zones are ATR-normalized. Support and resistance are not treated as exact single-price lines.
-
-Example:
-
-```text
-resistance = 749.53
-ATR = 7.20
-zone width = 0.5 * ATR = 3.60
-resistance zone = 745.93 to 753.13
-```
-
-### 8.4 `src/states.py`
-
-Purpose:
-
-```text
-Label every bar into exactly one deterministic market state.
-```
-
-Current state map:
-
-```text
-0  FAR_FROM_LEVEL
-1  APPROACHING_SUPPORT
-2  TOUCHING_SUPPORT
-3  SUPPORT_RECLAIM
-4  SUPPORT_BREAKDOWN
-5  APPROACHING_RESISTANCE
-6  COMPRESSION_BELOW_RESISTANCE
-7  RESISTANCE_BREAKOUT
-8  BREAKOUT_RETEST
-9  FAILED_BREAKOUT
-10 CONTINUATION
-11 CHOP_OR_NO_EDGE
-```
-
-Important functions:
+FMP REST client + dotenv key loader.
 
 ```python
-label_states(df)
-state_frequency_report(states)
-flag_rare_states(states)
+load_fmp_api_key(dotenv_path=None)
+normalize_fmp_ohlcv(records, symbol)
+download_fmp_ohlcv(symbol, start, end)
+FMPClient(api_key, transport=None)
 ```
 
-The first state rules are intentionally simple and deterministic. They are not optimized yet. Their job is to create a clean, testable state sequence that can feed the Markov model.
+The client masks the key in `repr`; missing-key errors never echo other secret values.
 
-Important design choice:
+### 10.3 `src/indicators.py`
+
+Indicators describe the current bar using current or prior data only. Columns:
 
 ```text
-Every row gets exactly one state.
+sma_20, sma_50, sma_200, ema_20, atr_14, rsi_14, bb_width_20,
+return_1d, return_5d, return_10d, realized_vol_20, volume_zscore_20,
+dist_to_sma_20, dist_to_sma_50, dist_to_sma_200
 ```
 
-If a row is missing warm-up features, it becomes:
+### 10.4 `src/levels.py`
 
-```text
-CHOP_OR_NO_EDGE
-```
+Support/resistance via prior rolling extremes (`.shift(1)` to prevent same-bar peek).
 
-### 8.5 `src/markov.py`
+### 10.5 `src/states.py`
 
-Purpose:
+12 deterministic state labels. Every bar gets exactly one state; warm-up bars become `CHOP_OR_NO_EDGE`.
 
-```text
-Estimate transition probabilities from the state sequence.
-```
+### 10.6 `src/markov.py`
 
-Important functions:
+Transition matrix + multi-step forecasts (matrix powers) + stationary distribution + walk-forward forecasts.
+
+### 10.7 `src/metrics.py`
+
+Expected value tables + walk-forward EV + cluster-pooled + Markov-weighted EV. New in Phase B:
 
 ```python
-estimate_transition_matrix(states, n_states, alpha=0.0)
-forecast_state_probs(P, current_state, horizon)
-stationary_distribution(P)
-walkforward_forecasts(states, n_states, lookback, horizons=(1, 5, 10, 20))
+sensitivity_stability_summary(sensitivity, metric="sharpe")
+bootstrap_sharpe_ci_from_trades(trade_returns, confidence=0.95, n_resamples=2000,
+                                block_size=None, annualization=252.0,
+                                avg_holding_period=1.0, random_state=0)
 ```
 
-The transition matrix answers:
+### 10.8 `src/backtests.py`
+
+Readable + walk-forward backtests with baselines. New in Phase B:
+
+```python
+run_walkforward_ev_backtest(..., signal_mask: pd.Series | None = None)
+baseline_random_label_walkforward(df, states, ..., seed=0)
+compare_backtest_to_baselines(..., random_label_result=None)
+```
+
+### 10.9 `src/volatility.py`
+
+Volatility regime classifier (LOW_VOL / NORMAL_VOL / HIGH_VOL) + ATR-based position sizing.
+
+### 10.10 `src/clustering.py`
+
+Asset-behavior clusters: realized volatility, trend persistence, reversal frequency, volume stability, average return.
+
+### 10.11 `src/hmm_models.py`
+
+Real implementation. `fit_hmm`, `label_regimes_by_behavior`, `regime_filter_signal`, `select_emissions`.
+
+### 10.12 `src/changepoints.py`
+
+Real implementation. `detect_changepoints` (Pelt via `ruptures`), `changepoint_pause_signal`, `annotate_changepoints`.
+
+### 10.13 `src/macro.py`
+
+Macro regime filter with **Sharpe-lift acceptance gate**.
+
+```python
+RISK_ON, RISK_OFF, NEUTRAL
+MIN_REQUIRED_SHARPE_LIFT = 0.20
+
+classify_macro_regime(spy_close, vix_close=None, spy_ma_window=200, ...)
+conditional_transition_matrices(states, macro_regimes, n_states, alpha=1e-6)
+macro_regime_distribution(macro_regimes)
+macro_filter_signal(macro_regimes, allowed_regimes)
+compare_conditional_to_unconditional(states, macro_regimes, n_states)
+evaluate_macro_filter_sharpe_lift(df, states, macro_regimes, allowed_regimes, ...)
+  -> {"sharpe_unfiltered", "sharpe_filtered", "sharpe_lift", "passes_gate", ...}
+```
+
+### 10.14 `src/drift.py` (Phase D)
+
+KL-divergence drift monitor.
+
+```python
+DEFAULT_KL_THRESHOLD = 0.10
+
+state_frequency_distribution(states, n_states, alpha=1e-6)
+kl_divergence(p, q, eps=1e-12)
+drift_alert(training_states, current_states, n_states, threshold=DEFAULT_KL_THRESHOLD)
+```
+
+### 10.15 `src/positions.py` (Phase D)
+
+Immutable paper-trading tracker.
+
+```python
+@dataclass(frozen=True)
+class Position:
+    position_id: str; symbol: str
+    signal_date: str; entry_date: str
+    entry_price: float; horizon: int; state: int; signal_ev: float
+    target_exit_date: str
+    exit_date: str | None; exit_price: float | None
+    net_return: float | None; closed_reason: str | None
+
+@dataclass(frozen=True)
+class PositionTracker:
+    positions: tuple[Position, ...]
+    # All mutations return new tracker instances.
+    open(...)                            -> PositionTracker
+    close(position_id, exit_date, ...)   -> PositionTracker
+    open_positions(symbol=None)          -> tuple[Position, ...]
+    has_open_position(symbol)            -> bool
+    find(position_id)                    -> Position | None
+    mark_to_market(prices)               -> dict[position_id, pnl]
+    save(path)                           -> Path           # atomic
+    @classmethod load(path)              -> PositionTracker
+```
+
+JSON schema is versioned (`SCHEMA_VERSION = 1`). Loading an unknown version raises.
+
+### 10.16 `src/paper_trading.py` (Phase D)
+
+Research only — never places orders.
+
+```python
+paper_trading_step(symbol, frame, tracker, today,
+                   horizon=5, lookback=252, min_samples=10,
+                   ev_threshold=0.0, cost_bps=5.0,
+                   drift_blocked=False, macro_blocked=False)
+  -> (updated_tracker, decisions)
+```
+
+Daily timing convention:
 
 ```text
-Given the current state, how often did the next bar move into each possible state?
+signal_date = yesterday (computed from data up to yesterday)
+entry_date  = today     (entry at today's close)
+exit_date   = today + horizon business days
 ```
 
-Example concept:
+Step logic:
+
+1. Close positions whose `target_exit_date` <= today.
+2. Skip new entries if `drift_blocked`, `macro_blocked`, or there is already an open position.
+3. Compute walk-forward EV for yesterday; open a new position at today's close if EV > `ev_threshold`.
+
+### 10.17 `src/dashboard.py` + `src/reports.py`
+
+Static HTML dashboard + Markdown experiment reports. The Research QA tab now includes:
 
 ```text
-FAILED_BREAKOUT -> FAR_FROM_LEVEL: 42.66%
-FAILED_BREAKOUT -> BREAKOUT_RETEST: 18.80%
-FAILED_BREAKOUT -> FAILED_BREAKOUT: 14.63%
+Cluster-Pooled EV
+Markov-Weighted EV
+Sensitivity Tests
+Parameter Stability (per symbol)     <- Phase B
+Block-Bootstrap Sharpe CI            <- Phase B
 ```
 
-Multi-step forecasts use matrix powers:
+The new cards render empty (not error) when `sensitivity_stability_summary.csv` or `walkforward_sharpe_ci.csv` haven't been generated yet.
 
-```text
-P^5
-P^10
-P^20
-```
+## 11. How To Use Each Feature
 
-Walk-forward forecasts estimate the matrix from only prior states. That avoids lookahead bias.
-
-## 9. How To Inspect Processed Data
-
-Run the pipeline:
+### 11.1 Download and enrich data
 
 ```powershell
 python notebooks\01_data_download.py
+python notebooks\01_data_download.py --provider fmp
 ```
 
-Then inspect SPY:
+### 11.2 Build state expectancy table
 
 ```powershell
-python -c "import pandas as pd; df=pd.read_parquet('data/processed/SPY.parquet'); print(df.tail()[['Close','sma_20','atr_14','nearest_support','nearest_resistance','state']])"
+python scripts\build_state_expectancy_table.py
 ```
 
-To see state names:
+### 11.3 Run full-sample narrow backtest (wiring only, lookahead-prone)
 
 ```powershell
-python -c "import pandas as pd; from src.config import STATE_LABELS; df=pd.read_parquet('data/processed/SPY.parquet'); print({i: STATE_LABELS[i] for i in sorted(df['state'].dropna().astype(int).unique())})"
+python scripts\run_narrow_backtest.py
 ```
 
-To inspect one date:
+### 11.4 Build volatility-conditioned expectancy
 
 ```powershell
-python -c "import pandas as pd; from src.config import STATE_LABELS; df=pd.read_parquet('data/processed/SPY.parquet'); dt=pd.Timestamp('2025-12-31'); row=df.loc[dt]; print(row[['Close','nearest_support','nearest_resistance','dist_to_support_atr','dist_to_resistance_atr','state']]); print('label:', STATE_LABELS[int(row['state'])])"
+python scripts\build_vol_conditioned_expectancy.py
 ```
 
-Note: the default `DEFAULT_END` is currently `2025-12-31`, so the saved processed data from the script will not include May 2026 unless the date range is changed or a direct pull is run.
-
-## 10. How To Run A Direct Markov Smoke Check
-
-This command downloads SPY, computes indicators, levels, states, and a 5-step Markov forecast:
+### 11.5 Run walk-forward backtest
 
 ```powershell
-python -c "from src.config import N_STATES, STATE_LABELS; from src.data import download_ohlcv; from src.indicators import add_indicators; from src.levels import detect_levels; from src.states import label_states; from src.markov import estimate_transition_matrix, forecast_state_probs; data=download_ohlcv(['SPY'], '2024-01-01', '2026-05-16'); frame=detect_levels(add_indicators(data['SPY'])); states=label_states(frame); P=estimate_transition_matrix(states, N_STATES, alpha=1e-6); current=int(states.iloc[-1]); probs=forecast_state_probs(P, current, 5); print('current_state', current, STATE_LABELS[current]); print(sorted([(STATE_LABELS[i], round(float(p),4)) for i,p in enumerate(probs)], key=lambda x: x[1], reverse=True)[:5])"
+python scripts\run_walkforward_backtest.py
+python scripts\run_walkforward_backtest.py --provider fmp
+python scripts\run_walkforward_backtest.py --provider fmp --full-universe
+python scripts\run_walkforward_backtest.py --symbols SPY QQQ
 ```
 
-Recent smoke-check result:
+### 11.6 Build asset behavior clusters
+
+```powershell
+python scripts\build_asset_clusters.py
+```
+
+### 11.7 Build cluster-pooled state expectancy
+
+```powershell
+python scripts\build_cluster_pooled_expectancy.py
+```
+
+### 11.8 Build Markov probability-weighted EV
+
+```powershell
+python scripts\build_markov_weighted_ev.py
+```
+
+### 11.9 Run walk-forward sensitivity tests
+
+```powershell
+python scripts\run_sensitivity_tests.py
+```
+
+### 11.10 Collapse the sensitivity grid into a stability summary (Phase B)
+
+```powershell
+python scripts\run_sensitivity_stability.py
+```
+
+Output: `reports/tables/sensitivity_stability_summary.csv`.
+
+### 11.11 Block-bootstrap Sharpe CIs (Phase B)
+
+```powershell
+python scripts\run_sharpe_bootstrap_ci.py
+python scripts\run_sharpe_bootstrap_ci.py --provider fmp --resamples 5000
+```
+
+Output: `reports/tables/walkforward_sharpe_ci.csv`. Block size = trade horizon to preserve serial structure between non-overlapping trades.
+
+### 11.12 Random-label permutation baseline (Phase B)
+
+```powershell
+python scripts\run_random_label_baseline.py
+python scripts\run_random_label_baseline.py --provider fmp --seed 42
+```
+
+Writes `reports/tables/random_label_baseline.csv` and merges the rows into `baseline_comparison.csv` (dedupe by `(symbol, model)`).
+
+If `random_label` performance is comparable to `state_ev_strategy`, the model is exploiting permutation artefacts.
+
+### 11.13 Cross-provider comparison
+
+```powershell
+python scripts\run_walkforward_backtest.py --provider yfinance
+python scripts\run_walkforward_backtest.py --provider fmp
+python scripts\run_provider_comparison.py --providers yfinance fmp
+```
+
+### 11.14 Drift monitor (Phase D)
+
+```powershell
+python scripts\run_drift_monitor.py
+python scripts\run_drift_monitor.py --provider fmp --recent 60 --threshold 0.10
+python scripts\run_drift_monitor.py --full-universe
+```
+
+### 11.15 Daily paper-trading step (Phase D)
+
+```powershell
+python scripts\run_paper_trading_daily.py
+python scripts\run_paper_trading_daily.py --provider fmp
+python scripts\run_paper_trading_daily.py --today 2026-05-16
+```
+
+**Research only.** This script never places orders.
+
+### 11.16 Build static HTML dashboard
+
+```powershell
+python scripts\build_dashboard.py
+```
+
+### 11.17 Run tests
+
+```powershell
+python -m pytest -q
+```
+
+Expected: `140 passed, 3 skipped`.
+
+## 12. How To Inspect Results Quickly
+
+Preview the walk-forward summary:
+
+```powershell
+python -c "import pandas as pd; print(pd.read_csv('reports/tables/walkforward_backtest_summary.csv'))"
+```
+
+Preview baseline comparison (now includes `random_label` rows):
+
+```powershell
+python -c "import pandas as pd; df=pd.read_csv('reports/tables/baseline_comparison.csv'); print(df[['symbol','model','total_return','excess_vs_buy_hold']].head(30))"
+```
+
+Preview stability summary:
+
+```powershell
+python -c "import pandas as pd; print(pd.read_csv('reports/tables/sensitivity_stability_summary.csv'))"
+```
+
+Preview Sharpe CIs:
+
+```powershell
+python -c "import pandas as pd; print(pd.read_csv('reports/tables/walkforward_sharpe_ci.csv'))"
+```
+
+Preview drift alerts:
+
+```powershell
+python -c "import pandas as pd; df=pd.read_csv('reports/tables/drift_status.csv'); print(df[df['alert']==True])"
+```
+
+Inspect open paper positions:
+
+```powershell
+python -c "from src.positions import PositionTracker; t=PositionTracker.load('reports/paper_trading/tracker.json'); [print(p) for p in t.open_positions()]"
+```
+
+## 13. Macro Acceptance Gate
+
+The macro filter (`src/macro.py`) is held to playbook §3.12: it must improve walk-forward Sharpe by >= 0.20 net-of-cost or be dropped.
+
+```python
+from src.macro import evaluate_macro_filter_sharpe_lift, RISK_ON
+
+result = evaluate_macro_filter_sharpe_lift(
+    df=frame,
+    states=frame["state"],
+    macro_regimes=macro_regimes,
+    allowed_regimes=[RISK_ON],
+    horizon=5, lookback=252, min_samples=10, cost_bps=5.0,
+)
+# result["sharpe_lift"], result["passes_gate"]
+```
+
+`passes_gate` is `True` iff `sharpe_lift >= MIN_REQUIRED_SHARPE_LIFT (0.20)`.
+
+## 14. Interpreting The Main Tables
+
+### 14.1 `state_expectancy.csv`
+
+First-pass payoff inspection. Caveat: full-sample expectancy is useful for research, not trusted backtesting.
+
+### 14.2 `walkforward_backtest_summary[_<provider>].csv`
+
+Primary prototype output. Columns: `symbol, provider, horizon, lookback, min_samples, total_return, max_drawdown, sharpe, trade_count, win_rate, exposure_time, benchmark_total_return`.
+
+### 14.3 `baseline_comparison.csv`
+
+Strategy vs. baselines. Models surfaced: `state_ev_strategy`, `buy_and_hold`, `ma_crossover`, `breakout`, `random_label`. The `excess_vs_buy_hold` column is the main edge measure; the `random_label` row is the permutation null.
+
+### 14.4 `walkforward_sensitivity.csv` + `sensitivity_stability_summary.csv`
+
+Sensitivity is the full grid; stability is the per-symbol collapse (median, std, IQR, share-of-negative-Sharpe). A robust result has tight IQR and low share-negative.
+
+### 14.5 `walkforward_sharpe_ci.csv`
+
+A Sharpe whose CI brackets zero is not significant evidence of edge regardless of the point estimate.
+
+### 14.6 `provider_comparison.csv`
+
+`<metric>__delta_<other>_minus_<base>` columns. A meaningful Sharpe delta means the conclusion is provider-sensitive; report which vendor was used.
+
+### 14.7 `vol_conditioned_state_expectancy.csv`
+
+Same payoff question, conditioned on `vol_state ∈ {LOW_VOL, NORMAL_VOL, HIGH_VOL}`.
+
+### 14.8 `asset_behavior_clusters.csv` + `cluster_pooled_state_expectancy.csv`
+
+Cluster-family payoffs are useful when a single-symbol state is too sparse.
+
+### 14.9 `markov_weighted_ev.csv`
+
+Destination-state weighted EV. `coverage` and `weighted_samples` are diagnostic quality checks.
+
+### 14.10 `drift_status.csv`
+
+`alert == True` means the recent window diverges from the training window past `threshold` (default 0.10 nats). Used as an entry gate by the paper-trading step.
+
+### 14.11 `paper_trading_decisions.csv`
+
+Append-only log. One row per `(run_date, symbol)` decision, including the `action` (`open`, `close`, `skip_entry`) and a `reason`.
+
+## 15. Current Prototype Results Snapshot
+
+Latest walk-forward summary (per the last yfinance run before Phase B/D):
 
 ```text
-current_state 9 FAILED_BREAKOUT
-top 5-step forecast:
-FAR_FROM_LEVEL              0.4266
-BREAKOUT_RETEST            0.1880
-FAILED_BREAKOUT            0.1463
-APPROACHING_RESISTANCE     0.1203
-COMPRESSION_BELOW_RESISTANCE 0.0729
+Best total return:           SMH
+Strong risk-adjusted result: XLF
+Weakest result:              XLE
+TLT:                         approximately flat / slightly negative
 ```
 
-This is not a trading signal yet. It is only a probability map from the current deterministic state model.
+Now that the random-label baseline, bootstrap Sharpe CIs, sensitivity stability summary, and macro gate exist, the next research question is whether those headline numbers survive **all four** robustness checks at once. The dashboard's Research QA tab is the easiest place to see that.
 
-## 11. What Has Not Been Built Yet
+## 16. Important Bias and Risk Notes
 
-Not built yet:
+Prototype hierarchy of trust:
 
 ```text
-expected value tables
-forward return evaluation
-trade rules
-backtesting
-benchmark comparison
-parameter sweeps
-HMM regimes
-change-point detection
-volatility filters
-macro filters
-report generation
+run_narrow_backtest.py        -- wiring only (lookahead-prone)
+run_walkforward_backtest.py   -- preferred prototype
++ random-label baseline       -- null-hypothesis check
++ block-bootstrap Sharpe CI   -- uncertainty band
++ sensitivity stability       -- parameter robustness
++ macro gate                  -- regime conditioning
++ provider comparison         -- vendor robustness
++ drift monitor               -- distribution-shift guardrail
 ```
 
-This is intentional. The project is being built in layers so we can verify each piece.
-
-## 12. Current Git State
-
-Recent completed phases:
+Remaining limitations:
 
 ```text
-data pipeline
-technical indicators
-support/resistance levels
-state labeling
-Markov transition and forecast utilities
+state definitions are still simple and deterministic
+transaction costs are simplified (5 bps round-trip default; no liquidity-aware slippage)
+no train/test split around major stress periods (still walk-forward only)
+clustering is interpretable but coarse (k = 3)
+paper trading is daily-close fills, no microstructure
 ```
 
-Generated local files ignored by git:
+## 17. Current Git and Generated File Notes
+
+Generated local files ignored by git include:
 
 ```text
 .venv/
@@ -462,162 +785,30 @@ Generated local files ignored by git:
 .pytest_tmp/
 .test_output/
 data/raw/*.csv
-data/processed/*.parquet
+data/processed/**/*.parquet
+reports/paper_trading/tracker.json   (regenerable from decisions log)
 ```
 
-## 13. How To Think About The Current Model
+Research outputs in `reports/tables/` and `reports/runs/` are useful artifacts. Decide case by case whether to commit them. They document experiment results, but they can become stale when model logic changes.
 
-Right now the system can answer:
+## 18. Phase E – Distribution (shipped)
 
-```text
-What state is each historical bar in?
-How often does each state transition to another state?
-Given today's state, what are the 1-step and multi-step future state probabilities?
-```
+The repo is now distributable:
 
-It cannot yet answer:
+- **PEP 621 / hatchling build** — `pyproject.toml` declares the package, version (`0.1.0`), runtime dependencies, optional extras (`hmm`, `changepoint`, `garch`, `kalman`, `ta`, `backtest`, `viz`, `notebook`, `dev`), and project URLs. `python -m build --wheel` produces `markov_ta_lab-0.1.0-py3-none-any.whl`. The wheel ships `src/` as the importable package.
+- **Editable install** — `pip install -e ".[dev]"` is the recommended developer workflow. The conda path still works for notebook kernels.
+- **Pinned dependencies** — `requirements.txt` and `pyproject.toml` both use conservative lower-bounds (`numpy>=1.26,<3.0`, `pandas>=2.2,<3.0`, etc.). For full reproducibility generate a `requirements.lock.txt` via `pip-compile`.
+- **CI** — `.github/workflows/test.yml` runs the pytest suite on Python 3.11 and 3.12 for every push/PR and sanity-builds the wheel. `.github/workflows/dashboard.yml` rebuilds `reports/dashboard/index.html` from the committed `reports/tables/*.csv` and publishes to GitHub Pages on each push to `main`.
 
-```text
-Is this setup profitable?
-Does it beat a simple breakout rule?
-What is the expected return after costs?
-What is the drawdown profile?
-Should a simulated strategy enter or exit?
-```
+### Enabling GitHub Pages
 
-Those questions belong to the next two phases: Expected Value Agent and Backtest Agent.
+Once, in the repo settings: **Settings → Pages → Source: GitHub Actions**. The next push to `main` will publish the dashboard.
 
-## 14. Roadmap For Tomorrow
+### Optional research follow-ups (post-roadmap)
 
-Target date: 2026-05-18
-
-### Phase 1: Expected Value Agent
-
-Primary file:
-
-```text
-src/metrics.py
-```
-
-Tests:
-
-```text
-tests/test_metrics.py
-```
-
-Build:
-
-```text
-forward_return_5
-forward_return_10
-forward_return_20
-average forward return by state
-win rate by state
-average win
-average loss
-expected value after costs
-sample count by state
-rare-state warnings
-```
-
-The important question:
-
-```text
-Which states historically had positive average forward returns after estimated costs?
-```
-
-### Phase 2: First State Expectancy Table
-
-Create a table like:
-
-```text
-state
-label
-count
-avg_forward_return_5
-avg_forward_return_10
-win_rate_5
-avg_win_5
-avg_loss_5
-ev_after_cost_5
-ev_after_cost_10
-```
-
-Save to:
-
-```text
-reports/tables/
-```
-
-### Phase 3: Markov Plus Expected Value
-
-Combine:
-
-```text
-current state
-forecast probabilities
-historical forward return by destination/current state
-expected value after costs
-```
-
-This begins to answer:
-
-```text
-If the model thinks continuation is more likely, does that actually imply positive expected value?
-```
-
-### Phase 4: First Human-Readable Experiment Report
-
-Create a first report in:
-
-```text
-reports/runs/
-```
-
-Include:
-
-```text
-question
-hypothesis
-data used
-state definitions
-transition matrix summary
-state expectancy table
-what worked
-what failed
-bias checks
-next experiment
-```
-
-### Phase 5: Prepare Backtest Agent
-
-Only after Expected Value Agent is working, start Backtest Agent.
-
-The first backtest should be narrow:
-
-```text
-long-only
-daily bars
-ETF universe
-fixed 5-bar or 10-bar exit
-costs included
-compare to simple breakout baseline
-```
-
-Do not add HMMs, macro filters, or change-point detection tomorrow unless the simple state and expected value analysis is working.
-
-## 15. Questions To Bring Tomorrow
-
-Good questions to ask after reading:
-
-```text
-Do the current state definitions feel intuitive?
-Should approaching resistance mean within 1 ATR or 1.5 ATR?
-Should failed breakout memory be 3, 5, or 10 bars?
-Should support/resistance use 60, 126, or 252 bars?
-Should state labels be asset-specific or estimated across all ETFs together?
-Should expected value be measured by current state only, or current state plus forecast destination?
-What transaction cost assumption should we use first?
-```
-
-These choices matter, but we should test them systematically rather than tune them by feel.
+- Cluster-level transition matrices.
+- Cluster-pooled walk-forward EV as a fallback when a single-symbol state is sparse.
+- Volatility-conditioned walk-forward backtests.
+- Liquidity-aware costs per symbol / per cluster.
+- Train/test regime splits around major stress periods.
+- A `requirements.lock.txt` generated via `pip-compile` for fully reproducible CI runs.
