@@ -3,8 +3,11 @@
 Run from the repository root:
 
     python notebooks/01_data_download.py
+    python notebooks/01_data_download.py --provider fmp
 """
 
+import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -24,8 +27,28 @@ def enrich_market_data(frame):
     return enriched
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Download and enrich OHLCV market data.")
+    parser.add_argument(
+        "--provider",
+        choices=["yfinance", "fmp"],
+        default=os.getenv("MARKOV_DATA_PROVIDER", "yfinance"),
+        help="Market data provider. Defaults to MARKOV_DATA_PROVIDER or yfinance.",
+    )
+    parser.add_argument("--start", default=DEFAULT_START, help="Inclusive start date.")
+    parser.add_argument("--end", default=DEFAULT_END, help="Exclusive/end date convention depends on provider.")
+    parser.add_argument(
+        "--symbols",
+        default=",".join(FIRST_EXPERIMENT_SYMBOLS),
+        help="Comma-separated symbols to download.",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
-    data = download_ohlcv(FIRST_EXPERIMENT_SYMBOLS, DEFAULT_START, DEFAULT_END)
+    args = parse_args()
+    symbols = [symbol.strip().upper() for symbol in args.symbols.split(",") if symbol.strip()]
+    data = download_ohlcv(symbols, args.start, args.end, provider=args.provider)
     enriched = {
         symbol: enrich_market_data(frame)
         for symbol, frame in data.items()

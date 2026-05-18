@@ -1,5 +1,7 @@
 """State Labeling Agent - deterministic market state classification."""
 
+from typing import cast
+
 import pandas as pd
 
 from src.config import N_STATES, STATE_LABELS
@@ -49,9 +51,9 @@ def label_states(df: pd.DataFrame, config: dict | None = None) -> pd.Series:
     """
     _validate_columns(df)
     settings = {**DEFAULT_CONFIG, **(config or {})}
-    proximity_atr = settings["proximity_atr"]
-    compression_bb_width = settings["compression_bb_width"]
-    breakout_memory = settings["breakout_memory"]
+    proximity_atr = float(settings["proximity_atr"])
+    compression_bb_width = float(settings["compression_bb_width"])
+    breakout_memory = int(settings["breakout_memory"])
 
     close = df["Close"]
     previous_close = close.shift(1)
@@ -108,15 +110,17 @@ def label_states(df: pd.DataFrame, config: dict | None = None) -> pd.Series:
 def state_frequency_report(states: pd.Series) -> pd.DataFrame:
     """Return a frequency table with count and percentage per state."""
     counts = states.astype(int).value_counts().sort_index()
-    total = int(counts.sum())
+    total = counts.sum()
     rows = []
-    for state_id, count in counts.items():
+    for raw_state_id, raw_count in counts.items():
+        state_id = cast(int, raw_state_id)
+        count = raw_count
         rows.append(
             {
-                "state": int(state_id),
-                "label": STATE_LABELS.get(int(state_id), "UNKNOWN"),
-                "count": int(count),
-                "percent": round((int(count) / total) * 100, 4) if total else 0.0,
+                "state": state_id,
+                "label": STATE_LABELS.get(state_id, "UNKNOWN"),
+                "count": count,
+                "percent": round((count / total) * 100, 4) if total else 0.0,
             }
         )
 
@@ -129,7 +133,7 @@ def state_frequency_report(states: pd.Series) -> pd.DataFrame:
 def flag_rare_states(states: pd.Series, min_count: int = 30) -> list[int]:
     """Return state IDs with at least one observation but fewer than min_count."""
     counts = states.astype(int).value_counts()
-    return sorted(int(state_id) for state_id, count in counts.items() if count < min_count)
+    return sorted(cast(int, state_id) for state_id, count in counts.items() if count < min_count)
 
 
 def _assign(states: pd.Series, mask: pd.Series, state_id: int) -> None:

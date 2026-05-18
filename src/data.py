@@ -16,10 +16,11 @@ def download_ohlcv(
     start: str,
     end: str,
     downloader: Downloader | None = None,
+    provider: str = "yfinance",
 ) -> dict[str, pd.DataFrame]:
     """Download and return clean OHLCV data keyed by symbol."""
     symbol_list = [symbols] if isinstance(symbols, str) else list(symbols)
-    fetch = downloader or _download_with_yfinance
+    fetch = downloader or _provider_downloader(provider)
 
     data: dict[str, pd.DataFrame] = {}
     for symbol in symbol_list:
@@ -69,13 +70,30 @@ def save_processed(data: dict[str, pd.DataFrame], output_dir: str | Path = "data
         frame.to_parquet(directory / f"{symbol.upper()}.parquet")
 
 
-def load_processed(symbol: str, data_dir: str | Path = "data/processed") -> pd.DataFrame:
-    """Load a previously saved processed Parquet file."""
-    path = Path(data_dir) / f"{symbol.upper()}.parquet"
-    frame = pd.read_parquet(path)
-    frame.index = pd.to_datetime(frame.index)
-    frame.index.name = "Date"
-    return frame
+def load_processed(
+    symbol: str,
+    data_dir: str | Path = "data/processed",
+    provider: str | None = None,
+) -> pd.DataFrame:
+    """Load a previously saved processed Parquet file.
+
+    When ``provider`` is set, looks first under ``data_dir/<provider>/SYMBOL.parquet``
+    and falls back to ``data_dir/SYMBOL.parquet`` so legacy snapshots remain
+    accessible without forcing a re-ingest.
+    """
+    root = Path(data_dir)
+    candidates: list[Path] = []
+    if provider is not None:
+        candidates.append(root / provider.lower() / f"{symbol.upper()}.parquet")
+    candidates.append(root / f"{symbol.upper()}.parquet")
+    for candidate in candidates:
+        if candidate.exists():
+            frame = pd.read_parquet(candidate)
+            frame.index = pd.to_datetime(frame.index)
+            frame.index.name = "Date"
+            return frame
+    tried = ", ".join(str(c) for c in candidates)
+    raise FileNotFoundError(f"No processed parquet found for {symbol!r}; tried: {tried}")
 
 
 def missing_data_report(data: dict[str, pd.DataFrame]) -> pd.DataFrame:
@@ -110,6 +128,21 @@ def _download_with_yfinance(symbol: str, start: str, end: str) -> pd.DataFrame:
         progress=False,
         group_by="column",
     )
+
+
+def _download_with_fmp(symbol: str, start: str, end: str) -> pd.DataFrame:
+    from src.fmp import download_fmp_ohlcv
+
+    return download_fmp_ohlcv(symbol, start, end)
+
+
+def _provider_downloader(provider: str) -> Downloader:
+    normalized = provider.lower().strip()
+    if normalized == "yfinance":
+        return _download_with_yfinance
+    if normalized == "fmp":
+        return _download_with_fmp
+    raise ValueError(f"Unsupported OHLCV provider: {provider}")
 
 
 def _flatten_yfinance_columns(frame: pd.DataFrame, symbol: str | None) -> pd.DataFrame:
