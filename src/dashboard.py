@@ -1,4 +1,4 @@
-"""Static dashboard generation for Markov TA Lab reports."""
+﻿"""Static dashboard generation for Markov TA Lab reports."""
 
 from __future__ import annotations
 
@@ -9,23 +9,25 @@ from pathlib import Path
 import pandas as pd
 
 from src.config import TABLES_DIR
+from src.ingestion_status import load_ingestion_status
 
 
 def generate_dashboard(
     tables_dir: str | Path = TABLES_DIR,
     output_dir: str | Path = "reports/dashboard",
+    ingestion_status_path: str | Path | None = None,
 ) -> Path:
     """Generate a self-contained HTML dashboard from report CSV tables."""
     tables_path = Path(tables_dir)
     output_path = Path(output_dir) / "index.html"
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    data = _load_dashboard_data(tables_path)
+    data = _load_dashboard_data(tables_path, ingestion_status_path=ingestion_status_path)
     output_path.write_text(_render_dashboard_html(data), encoding="utf-8")
     return output_path
 
 
-def _load_dashboard_data(tables_dir: Path) -> dict[str, object]:
+def _load_dashboard_data(tables_dir: Path, ingestion_status_path: str | Path | None = None) -> dict[str, object]:
     walkforward = _read_csv(tables_dir / "walkforward_backtest_summary.csv")
     baselines = _read_csv(tables_dir / "walkforward_baseline_comparison.csv")
     vol_conditioned = _read_csv(tables_dir / "vol_conditioned_state_expectancy.csv")
@@ -35,6 +37,9 @@ def _load_dashboard_data(tables_dir: Path) -> dict[str, object]:
     sensitivity = _read_optional_csv(tables_dir / "walkforward_sensitivity.csv")
     stability = _read_optional_csv(tables_dir / "sensitivity_stability_summary.csv")
     sharpe_ci = _read_optional_csv(tables_dir / "walkforward_sharpe_ci.csv")
+    ingestion_status, ingestion_error, ingestion_message = _load_ingestion_snapshot(
+        Path(ingestion_status_path) if ingestion_status_path is not None else tables_dir / "ingestion_status.json"
+    )
 
     # Phase F – forecast diagnostic panels (optional: absent if runner not yet run)
     fallback_usage = _read_optional_csv(tables_dir / "fallback_usage.csv")
@@ -53,6 +58,9 @@ def _load_dashboard_data(tables_dir: Path) -> dict[str, object]:
         "sensitivity": _records(sensitivity),
         "stability": _records(stability),
         "sharpeCi": _records(sharpe_ci),
+        "ingestionStatus": ingestion_status,
+        "ingestionError": ingestion_error,
+        "ingestionMessage": ingestion_message,
         "summary": _summary(walkforward, baselines, clusters),
         # Phase F panels
         "fallbackUsage": _records(fallback_usage),
@@ -70,6 +78,7 @@ def _load_dashboard_data(tables_dir: Path) -> dict[str, object]:
             "sensitivity": "walkforward_sensitivity.csv",
             "stability": "sensitivity_stability_summary.csv",
             "sharpeCi": "walkforward_sharpe_ci.csv",
+            "ingestionStatus": "ingestion_status.json",
             "fallbackUsage": "fallback_usage.csv",
             "confidenceDist": "confidence_distribution.csv",
             "topRareStates": "top_rare_states.csv",
@@ -107,6 +116,37 @@ def _latest_cluster_name(tables_dir: Path) -> str:
         reverse=True,
     )
     return candidates[0].name if candidates else "asset_behavior_clusters.csv"
+
+
+def _load_ingestion_snapshot(path: Path) -> tuple[dict[str, object] | None, str | None, str | None]:
+    try:
+        status = load_ingestion_status(path)
+        if status is None:
+            return None, None, "No ingestion status captured yet."
+        _validate_ingestion_status(status)
+        return status, None, None
+    except Exception as exc:
+        return None, f"Could not load ingestion status: {exc}", None
+
+
+def _validate_ingestion_status(status: object) -> None:
+    if not isinstance(status, dict):
+        raise ValueError("expected a JSON object")
+
+    required = ("provider", "start", "end", "status", "started_at", "symbols")
+    missing = [key for key in required if key not in status]
+    if missing:
+        raise ValueError(f"missing field(s): {', '.join(missing)}")
+
+    if not isinstance(status["symbols"], list):
+        raise ValueError("symbols must be a list")
+
+    for index, symbol in enumerate(status["symbols"]):
+        if not isinstance(symbol, dict):
+            raise ValueError(f"symbols[{index}] must be an object")
+        for key in ("symbol", "status"):
+            if key not in symbol:
+                raise ValueError(f"symbols[{index}] missing field: {key}")
 
 
 def _records(frame: pd.DataFrame) -> list[dict[str, object]]:
@@ -149,7 +189,7 @@ def _summary(walkforward: pd.DataFrame, baselines: pd.DataFrame, clusters: pd.Da
 
 
 def _render_dashboard_html(data: dict[str, object]) -> str:
-    payload = json.dumps(data, allow_nan=False)
+    payload = _safe_script_json(data)
     generated_note = escape("Data is embedded from reports/tables at generation time.")
     return f"""<!doctype html>
 <html lang="en">
@@ -191,10 +231,18 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
     .tabs {{ display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }}
     .tab {{ border: 1px solid var(--line); background: var(--surface); border-radius: 7px; padding: 9px 12px; color: var(--muted); cursor: pointer; font-weight: 650; }}
     .tab.active {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
-    .bar-row {{ display: grid; grid-template-columns: 54px minmax(0, 1fr) 86px; gap: 12px; align-items: center; margin: 10px 0; }}
-    .bar-track {{ height: 16px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }}
-    .bar {{ height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); min-width: 2px; }}
-    .neg {{ background: linear-gradient(90deg, #e26d5c, #b42318); }}
+    .chart-wrap {{ width: 100%; overflow-x: auto; }}
+    .chart-svg {{ display: block; width: 100%; min-width: 620px; height: auto; }}
+    .chart-grid {{ stroke: var(--line); stroke-width: 1; }}
+    .zero-axis {{ stroke: #738394; stroke-width: 1.5; }}
+    .chart-bar {{ rx: 3; ry: 3; }}
+    .chart-bar.pos {{ fill: var(--accent); }}
+    .chart-bar.neg {{ fill: #c24135; }}
+    .chart-label {{ fill: var(--text); font-size: 12px; font-weight: 700; }}
+    .chart-value {{ fill: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }}
+    .chart-value-pos, .chart-value-neg {{ dominant-baseline: auto; }}
+    .chart-axis-label {{ fill: var(--muted); font-size: 11px; }}
+    .chart-empty {{ color: var(--muted); background: #fbfcfd; border: 1px dashed var(--line); border-radius: 8px; padding: 22px; text-align: center; }}
     table {{ width: 100%; border-collapse: collapse; font-size: 13px; }}
     th, td {{ border-bottom: 1px solid var(--line); padding: 9px 8px; text-align: right; white-space: nowrap; }}
     th:first-child, td:first-child {{ text-align: left; }}
@@ -257,6 +305,7 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
       <button class="tab" data-panel="baselines">Baselines</button>
       <button class="tab" data-panel="volatility">Volatility EV</button>
       <button class="tab" data-panel="clusters">Clusters</button>
+      <button class="tab" data-panel="ingestion">Ingestion</button>
       <button class="tab" data-panel="research">Research QA</button>
       <button class="tab" data-panel="forecast-diag">Forecast Diagnostics</button>
     </nav>
@@ -294,6 +343,16 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
         <div class="table-wrap"><table id="cluster-table"></table></div>
       </div>
     </section>
+    <section id="ingestion" class="panel grid two" hidden>
+      <div class="card">
+        <h2>Ingestion Status</h2>
+        <div id="ingestion-summary" class="summary-grid"></div>
+      </div>
+      <div class="card">
+        <h2>Symbol Rows</h2>
+        <div class="table-wrap"><table id="ingestion-table"></table></div>
+      </div>
+    </section>
     <section id="research" class="panel grid two" hidden>
       <div class="card">
         <h2>Cluster-Pooled EV</h2>
@@ -309,7 +368,7 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
       </div>
       <div class="card">
         <h2>Parameter Stability (per symbol)</h2>
-        <p class="note">Higher std / wider IQR ⇒ Sharpe is sensitive to the parameter grid (less robust).</p>
+        <p class="note">Higher std / wider IQR â‡’ Sharpe is sensitive to the parameter grid (less robust).</p>
         <div class="table-wrap"><table id="stability-table"></table></div>
       </div>
       <div class="card">
@@ -386,14 +445,78 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
       document.getElementById("plain-results").innerHTML = items.map(item => `<li>${{esc(item)}}</li>`).join("");
     }}
 
-    function bars(target, rows, valueKey, labelKey, valueFormatter = fmtPct) {{
-      const values = rows.map(row => Number(row[valueKey] ?? 0));
-      const max = Math.max(...values.map(Math.abs), 0.000001);
-      document.getElementById(target).innerHTML = rows.map(row => {{
-        const value = Number(row[valueKey] ?? 0);
-        const width = Math.max(2, Math.abs(value) / max * 100);
-        return `<div class="bar-row"><strong>${{esc(row[labelKey])}}</strong><div class="bar-track"><div class="bar ${{value < 0 ? "neg" : ""}}" style="width:${{width}}%"></div></div><span class="${{value < 0 ? "bad" : "good"}}">${{valueFormatter(value)}}</span></div>`;
+    function svgDivergingBars(target, rows, options) {{
+      const {{
+        valueKey,
+        labelKey,
+        title,
+        valueFormatter = fmtPct,
+        maxRows = 12,
+        emptyText = "No chart rows available."
+      }} = options;
+      const container = document.getElementById(target);
+      const chartRows = rows
+        .map(row => ({{...row, chartValue: Number(row[valueKey])}}))
+        .filter(row => Number.isFinite(row.chartValue))
+        .slice(0, maxRows);
+
+      if (!chartRows.length) {{
+        container.innerHTML = `<div class="chart-empty">${{esc(emptyText)}}</div>`;
+        return;
+      }}
+
+      const width = 760;
+      const left = 132;
+      const right = 88;
+      const top = 32;
+      const rowHeight = 34;
+      const bottom = 26;
+      const barHeight = 16;
+      const valueGutter = 78;
+      const plotLeft = left + valueGutter;
+      const plotRight = width - right - valueGutter;
+      const plotWidth = plotRight - plotLeft;
+      const zeroX = plotLeft + plotWidth / 2;
+      const maxAbs = Math.max(...chartRows.map(row => Math.abs(row.chartValue)), 0.000001);
+      const height = top + bottom + chartRows.length * rowHeight;
+      const titleId = `${{target}}-title`;
+      const axisY = height - bottom + 6;
+      const truncate = value => {{
+        const text = String(value ?? "n/a");
+        return text.length > 18 ? `${{text.slice(0, 15)}}...` : text;
+      }};
+
+      const bars = chartRows.map((row, index) => {{
+        const value = row.chartValue;
+        const y = top + index * rowHeight + 5;
+        const scaled = Math.max(2, Math.abs(value) / maxAbs * (plotWidth / 2));
+        const x = value < 0 ? zeroX - scaled : zeroX;
+        const label = row[labelKey] ?? "n/a";
+        const formatted = valueFormatter(value);
+        const valueX = value < 0 ? plotLeft - 8 : plotRight + 8;
+        const valueAnchor = value < 0 ? "end" : "start";
+        const valueTextLength = Math.min(valueGutter - 16, Math.max(36, String(formatted).length * 7));
+        return `
+          <text class="chart-label" x="${{left - 10}}" y="${{y + 12}}" text-anchor="end"><title>${{esc(label)}}</title>${{esc(truncate(label))}}</text>
+          <rect class="chart-bar ${{value < 0 ? "neg" : "pos"}}" x="${{x.toFixed(2)}}" y="${{y}}" width="${{scaled.toFixed(2)}}" height="${{barHeight}}">
+            <title>${{esc(label)}}: ${{esc(formatted)}}</title>
+          </rect>
+          <text class="chart-value chart-value-${{value < 0 ? "neg" : "pos"}}" data-label-side="${{value < 0 ? "left-gutter" : "right-gutter"}}" x="${{valueX.toFixed(2)}}" y="${{y + 12}}" text-anchor="${{valueAnchor}}" textLength="${{valueTextLength.toFixed(2)}}" lengthAdjust="spacingAndGlyphs"><title>${{esc(label)}}: ${{esc(formatted)}}</title>${{esc(formatted)}}</text>`;
       }}).join("");
+
+      container.innerHTML = `
+        <div class="chart-wrap">
+          <svg class="chart-svg" viewBox="0 0 ${{width}} ${{height}}" role="img" aria-labelledby="${{titleId}}">
+            <title id="${{titleId}}">${{esc(title)}}</title>
+            <line class="chart-grid" x1="${{plotLeft}}" x2="${{plotRight}}" y1="${{top - 10}}" y2="${{top - 10}}"></line>
+            <line class="zero-axis" x1="${{zeroX}}" x2="${{zeroX}}" y1="${{top - 14}}" y2="${{height - bottom}}"></line>
+            <line class="chart-grid" x1="${{plotLeft}}" x2="${{plotRight}}" y1="${{height - bottom}}" y2="${{height - bottom}}"></line>
+            ${{bars}}
+            <text class="chart-axis-label" x="${{plotLeft}}" y="${{axisY}}" text-anchor="start">-${{esc(valueFormatter(maxAbs))}}</text>
+            <text class="chart-axis-label" x="${{zeroX}}" y="${{axisY}}" text-anchor="middle">0</text>
+            <text class="chart-axis-label" x="${{plotRight}}" y="${{axisY}}" text-anchor="end">${{esc(valueFormatter(maxAbs))}}</text>
+          </svg>
+        </div>`;
     }}
 
     function table(target, columns, rows) {{
@@ -404,7 +527,11 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
 
     function renderPerformance() {{
       const rows = [...dashboardData.walkforward].sort((a, b) => Number(b.total_return) - Number(a.total_return));
-      bars("performance-bars", rows, "total_return", "symbol");
+      svgDivergingBars("performance-bars", rows, {{
+        valueKey: "total_return",
+        labelKey: "symbol",
+        title: "Walk-forward performance total return by symbol"
+      }});
       table("risk-table", [
         {{key:"symbol", label:"Symbol"}},
         {{key:"sharpe", label:"Sharpe", format: fmtNum}},
@@ -432,7 +559,12 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
         .sort((a, b) => Math.abs(Number(b.ev_after_cost_5)) - Math.abs(Number(a.ev_after_cost_5)))
         .slice(0, 16)
         .map(row => ({{...row, key: `${{row.symbol}} V${{row.vol_state}} S${{row.state}}`}}));
-      bars("vol-bars", rows.slice(0, 10), "ev_after_cost_5", "key");
+      svgDivergingBars("vol-bars", rows, {{
+        valueKey: "ev_after_cost_5",
+        labelKey: "key",
+        title: "Volatility-conditioned expected value after cost",
+        maxRows: 10
+      }});
       table("vol-table", [
         {{key:"symbol", label:"Symbol"}},
         {{key:"vol_state", label:"Vol"}},
@@ -456,6 +588,46 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
         {{key:"reversal_frequency", label:"Reversal", format: fmtPct}},
         {{key:"volume_stability", label:"Volume Stable", format: fmtPct}}
       ], dashboardData.clusters);
+    }}
+
+    function renderIngestion() {{
+      const summary = document.getElementById("ingestion-summary");
+      if (dashboardData.ingestionError) {{
+        summary.innerHTML = `<div class="summary-block" style="grid-column:1 / -1;"><h3>Status artifact</h3><p class="note">${{esc(dashboardData.ingestionError)}}</p></div>`;
+        document.getElementById("ingestion-table").innerHTML = "";
+        return;
+      }}
+      if (!dashboardData.ingestionStatus) {{
+        summary.innerHTML = `<div class="summary-block" style="grid-column:1 / -1;"><h3>Status artifact</h3><p class="note">${{esc(dashboardData.ingestionMessage || "No ingestion status captured yet.")}}</p></div>`;
+        document.getElementById("ingestion-table").innerHTML = "";
+        return;
+      }}
+
+      const status = dashboardData.ingestionStatus;
+      summary.innerHTML = [
+        ["Status", status.status ?? "n/a", status.run_id ?? ""],
+        ["Provider", status.provider ?? "n/a", `${{status.start ?? "n/a"}} to ${{status.end ?? "n/a"}}`],
+        ["Started", status.started_at ?? "n/a", `Finished: ${{status.finished_at ?? "n/a"}}`]
+      ].map(([label, value, sub]) => `
+        <div class="summary-block"><h3>${{esc(label)}}</h3><div class="value">${{esc(value)}}</div><p>${{esc(sub)}}</p></div>
+      `).join("");
+
+      const rows = [...(status.symbols || [])].map(row => ({{
+        ...row,
+        missing_count: row.missing_count ?? row.total_missing ?? 0,
+        first_date: row.first_date ?? "n/a",
+        last_date: row.last_date ?? "n/a",
+        error: row.error ?? ""
+      }}));
+      table("ingestion-table", [
+        {{key:"symbol", label:"Symbol"}},
+        {{key:"status", label:"Status"}},
+        {{key:"rows", label:"Rows"}},
+        {{key:"first_date", label:"First Date"}},
+        {{key:"last_date", label:"Last Date"}},
+        {{key:"missing_count", label:"missing_count"}},
+        {{key:"error", label:"Error"}}
+      ], rows);
     }}
 
     function renderResearchQA() {{
@@ -582,9 +754,20 @@ def _render_dashboard_html(data: dict[str, object]) -> str:
     renderBaselines();
     renderVolatility();
     renderClusters();
+    renderIngestion();
     renderResearchQA();
     renderForecastDiag();
   </script>
 </body>
 </html>
 """
+
+
+def _safe_script_json(data: dict[str, object]) -> str:
+    """Serialize JSON for embedding in an inline script tag."""
+    return (
+        json.dumps(data, allow_nan=False)
+        .replace("&", "\\u0026")
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+    )
